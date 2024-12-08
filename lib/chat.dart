@@ -1,12 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+
 import 'package:laboratorio/components/chat/message.dart';
 import 'package:laboratorio/components/chat/textBar.dart';
 import 'package:laboratorio/services/openAIService.dart';
-
-const loremIpsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In sit amet suscipit ligula, nec elementum lorem. Phasellus volutpat sollicitudin lacus, quis pulvinar lectus aliquet nec. Nam vulputate nulla quis imperdiet vulputate. Aenean consequat, risus sed pellentesque convallis, urna ipsum tincidunt nisi, sit amet sagittis magna justo in purus. Aliquam efficitur, nunc eget interdum tincidunt, justo erat fermentum felis, eget consequat orci nulla mattis purus. Cras mollis pellentesque vulputate. Etiam a ligula a turpis placerat pharetra suscipit vel quam. Duis volutpat ultrices libero. Nunc congue nisi id quam vehicula eleifend at ut est. Pellentesque laoreet justo vitae mi rhoncus, id eleifend ante consequat.';
-const _colorPrimary = Color.fromRGBO(116, 197, 232, 1);
-const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
-const _colorDark = Color.fromRGBO(80, 81, 79, 1);
 
 class Chat extends StatefulWidget {
   const Chat({super.key});
@@ -20,11 +20,18 @@ class _ChatState extends State<Chat> {
   final _controller = TextEditingController();
   List<Message> messages = [];
 
+  final _record = Record();
+  String? _audioFilePath;
+  bool _isRecording = false;
+
   void _sendMessage() async {
     final userInput = _controller.text;
     if (userInput.isEmpty) return;
+    _controller.clear();
 
-    messages.add(Message(isReponse: false, text: userInput));
+    setState(() {
+      messages.add(Message(isReponse: false, text: userInput));
+    });
 
     final result = await _openAIService.sendMessage(userInput);
     setState(() {
@@ -32,21 +39,66 @@ class _ChatState extends State<Chat> {
     });
   }
 
+  Future<void> _startRecording() async {
+    final directory = await getApplicationDocumentsDirectory();
+    _audioFilePath = '${directory.path}/recording.m4a';
+
+    if (await _record.hasPermission()) {
+      await _record.start(path: _audioFilePath);
+      setState(() {
+        _isRecording = true;
+      });
+    }
+  }
+
+  Future<void> _stopRecordingAndSend() async {
+    if (await _record.isRecording()) {
+      await _record.stop();
+
+      setState(() {
+        _isRecording = false;
+      });
+
+      if (_audioFilePath != null) {
+        final audioFile = File(_audioFilePath!);
+        final resultAudio = await _openAIService.transcribeAudio(audioFile);
+
+        if (resultAudio == null) {
+          return;
+        }
+
+        setState(() {
+          messages.add(Message(isReponse: false, text: resultAudio));
+        });
+
+        final result = await _openAIService.sendMessage(resultAudio);
+        setState(() {
+          messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
    return Scaffold(
       backgroundColor: Colors.grey[200],
       body: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 48),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 48, bottom: 16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Flex(
               direction: Axis.vertical,
               children: messages
             ),
-            TextBar(controller: _controller, onSend: _sendMessage)
+            TextBar(
+              controller: _controller,
+              onSendMessage: _sendMessage,
+              startRecording: _startRecording,
+              stopRecording: _stopRecordingAndSend,
+              isRecording: _isRecording,
+            )
           ],
         ),
       ),
