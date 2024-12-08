@@ -21,8 +21,9 @@ class Message extends StatelessWidget {
       children: [
         isReponse ? const SizedBox(height: 16) : const SizedBox.shrink(),
         Container(
+          alignment: isReponse ? Alignment.centerLeft : Alignment.centerRight,
           decoration: BoxDecoration(
-            color: isReponse ? _colorDark : _colorWhite,
+            color: isReponse ? _colorWhite : _colorDark,
             borderRadius: BorderRadius.circular(8),
             boxShadow: const [
               BoxShadow(
@@ -33,17 +34,13 @@ class Message extends StatelessWidget {
             ],
           ),
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              Text(
-                text,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isReponse ? _colorWhite : _colorDark,
-                ),
-              ),
-            ],
-          )
+          child:Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              color: isReponse ? _colorDark : _colorWhite,
+            ),
+          ),
         ),
         isReponse ?
           Row(
@@ -53,6 +50,7 @@ class Message extends StatelessWidget {
             ],
           )
           : const SizedBox.shrink(),
+        isReponse ? const SizedBox(height: 16) : const SizedBox.shrink(),
       ],
     );
   }
