@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:laboratorio/configuration.dart';
+import 'package:laboratorio/createUser.dart';
+import 'package:laboratorio/profile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,6 +56,7 @@ class _MyHomePageState extends State<MyHomePage> {
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -62,7 +65,27 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
               child: const Text('Go to Configurations'),
-            ), 
+            ),
+            const SizedBox(height: 10), 
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CreateAccountScreen()),
+                );
+              },
+              child: const Text('Create Account'),
+            ),
+            const SizedBox(height: 10), 
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => InfoScreen()),
+                );
+              },
+              child: const Text('Profile'),
+            ),
           ],
         ),
       ),
@@ -70,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
-      ), 
+      ),
     );
   }
 }
