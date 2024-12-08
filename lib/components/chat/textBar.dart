@@ -2,15 +2,22 @@ import 'package:flutter/material.dart';
 
 const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
 const _colorDark = Color.fromRGBO(80, 81, 79, 1);
+const _colorPrimary = Color.fromRGBO(116, 197, 232, 1);
 
 class TextBar extends StatelessWidget {
   final TextEditingController controller;
-  final Function() onSend;
+  final Function() onSendMessage;
+  final Function() startRecording;
+  final Function() stopRecording;
+  final bool isRecording;
 
   const TextBar({
     super.key,
     required this.controller,
-    required this.onSend,
+    required this.onSendMessage,
+    required this.startRecording,
+    required this.stopRecording,
+    required this.isRecording,
   });
 
   @override
@@ -55,14 +62,16 @@ class TextBar extends StatelessWidget {
                 ),
               ),
             ),
-            IconButton(
-              onPressed: () => {
-                print('Listening audio')
-              },
-              icon: const Icon(Icons.mic),
+            GestureDetector(
+              onTapDown: (_) => startRecording(),
+              onTapUp: (_) => stopRecording(),
+              child: Icon(
+                Icons.mic,
+                color: isRecording ? _colorPrimary : _colorDark,
+              )
             ),
             IconButton(
-              onPressed: onSend,
+              onPressed: onSendMessage,
               icon: const Icon(Icons.send),
             ),
           ],
