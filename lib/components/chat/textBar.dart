@@ -4,9 +4,13 @@ const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
 const _colorDark = Color.fromRGBO(80, 81, 79, 1);
 
 class TextBar extends StatelessWidget {
+  final TextEditingController controller;
+  final Function() onSend;
 
   const TextBar({
-    super.key
+    super.key,
+    required this.controller,
+    required this.onSend,
   });
 
   @override
@@ -42,9 +46,10 @@ class TextBar extends StatelessWidget {
               },
               icon: const Icon(Icons.attach_file),
             ),
-            const Expanded(
+            Expanded(
               child: TextField(
-                decoration: InputDecoration(
+                controller: controller,
+                decoration: const InputDecoration(
                   hintText: 'Type a message',
                   border: InputBorder.none,
                 ),
@@ -57,9 +62,7 @@ class TextBar extends StatelessWidget {
               icon: const Icon(Icons.mic),
             ),
             IconButton(
-              onPressed: () => {
-                print('Sending message')
-              },
+              onPressed: onSend,
               icon: const Icon(Icons.send),
             ),
           ],
