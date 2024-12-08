@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+
+const loremIpsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In sit amet suscipit ligula, nec elementum lorem. Phasellus volutpat sollicitudin lacus, quis pulvinar lectus aliquet nec. Nam vulputate nulla quis imperdiet vulputate. Aenean consequat, risus sed pellentesque convallis, urna ipsum tincidunt nisi, sit amet sagittis magna justo in purus. Aliquam efficitur, nunc eget interdum tincidunt, justo erat fermentum felis, eget consequat orci nulla mattis purus. Cras mollis pellentesque vulputate. Etiam a ligula a turpis placerat pharetra suscipit vel quam. Duis volutpat ultrices libero. Nunc congue nisi id quam vehicula eleifend at ut est. Pellentesque laoreet justo vitae mi rhoncus, id eleifend ante consequat.';
 
 class OpenAIService {
   final String apiKey;
@@ -18,19 +21,56 @@ class OpenAIService {
     final body = jsonEncode({
       'model': model,
       'messages': [
-        {'role': 'system', 'content': 'You are a helpful assistant.'},
+        {'role': 'system', 'content': 'Você é um professor de programação.'},
         {'role': 'user', 'content': prompt}
       ],
       'temperature': 0.7,
       'max_tokens': 150,
     });
 
+    // return loremIpsum;
     try {
       final response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         return responseData['choices'][0]['message']['content']?.trim();
+      } else {
+        print('Error: ${response.statusCode}, ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Exception occurred: $e');
+      return null;
+    }
+  }
+
+  Future<String?> transcribeAudio(File audioFile) async {
+    final url = Uri.parse('$_baseUrl/audio/transcriptions');
+    final headers = {
+      'Authorization': 'Bearer $apiKey',
+    };
+
+    final request = http.MultipartRequest('POST', url);
+    request.headers.addAll(headers);
+
+    request.files.add(
+      http.MultipartFile(
+        'file',
+        audioFile.readAsBytes().asStream(),
+        audioFile.lengthSync(),
+        filename: audioFile.path.split('/').last,
+      ),
+    );
+    request.fields['model'] = 'whisper-1';
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        return responseData['text']?.trim();
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
         return null;
