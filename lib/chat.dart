@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:record/record.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'package:laboratorio/components/chat/message.dart';
 import 'package:laboratorio/components/chat/textBar.dart';
@@ -20,8 +21,8 @@ class _ChatState extends State<Chat> {
   final _controller = TextEditingController();
   List<Message> messages = [];
 
-  final _record = Record();
-  String? _audioFilePath;
+  final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
+  String? _filePath;
   bool _isRecording = false;
 
   void _sendMessage() async {
@@ -41,42 +42,64 @@ class _ChatState extends State<Chat> {
 
   Future<void> _startRecording() async {
     final directory = await getApplicationDocumentsDirectory();
-    _audioFilePath = '${directory.path}/recording.m4a';
+    final filePath = '${directory.path}/recording.m4a';
 
-    if (await _record.hasPermission()) {
-      await _record.start(path: _audioFilePath);
+    await _recorder.startRecorder(
+      toFile: filePath,
+      codec: Codec.aacMP4,
+    );
+
+    setState(() {
+      _filePath = filePath;
+      _isRecording = true;
+    });
+  }
+
+  Future<void> _stopRecordingAndSend() async {
+    await _recorder.stopRecorder();
+
+    setState(() {
+      _isRecording = false;
+    });
+
+    if (_filePath != null) {
+      final audioFile = File(_filePath!);
+      final resultAudio = await _openAIService.transcribeAudio(audioFile);
+
+      if (resultAudio == null) return;
+
       setState(() {
-        _isRecording = true;
+        messages.add(Message(isReponse: false, text: resultAudio));
+      });
+
+      final result = await _openAIService.sendMessage(resultAudio);
+
+      setState(() {
+        messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
       });
     }
   }
 
-  Future<void> _stopRecordingAndSend() async {
-    if (await _record.isRecording()) {
-      await _record.stop();
 
-      setState(() {
-        _isRecording = false;
-      });
-
-      if (_audioFilePath != null) {
-        final audioFile = File(_audioFilePath!);
-        final resultAudio = await _openAIService.transcribeAudio(audioFile);
-
-        if (resultAudio == null) {
-          return;
-        }
-
-        setState(() {
-          messages.add(Message(isReponse: false, text: resultAudio));
-        });
-
-        final result = await _openAIService.sendMessage(resultAudio);
-        setState(() {
-          messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
-        });
-      }
+  Future<void> _initializeRecorder() async {
+    final status = await Permission.microphone.request();
+    if (status != PermissionStatus.granted) {
+      throw RecordingPermissionException('Microphone permission not granted');
     }
+
+    await _recorder.openRecorder();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeRecorder();
+  }
+
+  @override
+  void dispose() {
+    _recorder.closeRecorder();
+    super.dispose();
   }
 
   @override
