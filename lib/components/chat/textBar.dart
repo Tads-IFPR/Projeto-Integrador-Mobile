@@ -63,8 +63,8 @@ class TextBar extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTapDown: (_) => startRecording(),
-              onTapUp: (_) => stopRecording(),
+              onLongPress: () => startRecording(),
+              onLongPressEnd: (_) => stopRecording(),
               child: Icon(
                 Icons.mic,
                 color: isRecording ? _colorPrimary : _colorDark,
