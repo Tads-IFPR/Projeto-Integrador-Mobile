@@ -15,6 +15,7 @@ class _ConfigurationState extends State<Configuration> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _photoIdController = TextEditingController();
 
   // Variables to track form state
   String _selectedLanguage = 'English';
@@ -64,19 +65,23 @@ class _ConfigurationState extends State<Configuration> {
       name: _nameController.text,
       email: _emailController.text,
       isSaveChats: Value(_saveMessages),
-      photoId: '', // You might want to handle photo upload separately
+      photoId: Value(''),// Handle null value
       language: _selectedLanguage,
     );
 
     try {
       // Save user to database
       final userId = await _database.createUser(user);
+      if(userId != null){
+        final user = await _database.getUserById(userId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('User saved successfully with ID: ${user?.id} NAME: ${user?.name} EMAIL: ${user?.email}' )),
+        );
+      }
       // Fetch updated list of users
       await _fetchUsers();
       // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('User saved successfully with ID: $userId')),
-      );
+
     } catch (e) {
       // Handle any errors
       ScaffoldMessenger.of(context).showSnackBar(
