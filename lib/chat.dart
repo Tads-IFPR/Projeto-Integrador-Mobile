@@ -69,7 +69,7 @@ class _ChatState extends State<Chat> {
       if (resultAudio == null) return;
 
       setState(() {
-        messages.add(Message(isReponse: false, text: resultAudio));
+        messages.add(Message(isReponse: false, audio: audioFile));
       });
 
       final result = await _openAIService.sendMessage(resultAudio);
