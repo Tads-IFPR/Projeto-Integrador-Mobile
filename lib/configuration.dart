@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/model/user.dart';
+import 'package:image_picker/image_picker.dart';
 
 class Configuration extends StatefulWidget {
   const Configuration({super.key});
@@ -15,7 +18,6 @@ class _ConfigurationState extends State<Configuration> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _photoIdController = TextEditingController();
 
   // Variables to track form state
   String _selectedLanguage = 'English';
@@ -24,6 +26,7 @@ class _ConfigurationState extends State<Configuration> {
   // Database instance
   late AppDatabase _database;
   List<User> _users = [];
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +53,19 @@ class _ConfigurationState extends State<Configuration> {
     });
   }
 
+  XFile? _selectedImage;
+
+  // Method to pick an image
+  Future<void> _pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = image;
+      });
+    }
+  }
+
   // Method to save user
   Future<void> _saveUser() async {
     // Validate input
@@ -60,22 +76,43 @@ class _ConfigurationState extends State<Configuration> {
       return;
     }
 
+    // Save the image and get the image ID
+    int? imageId;
+    if (_selectedImage != null) {
+      final file = FilesdbCompanion.insert(
+        mimeType: 'image/jpeg', // Adjust as needed
+        size: await _selectedImage!.length(),
+        path: _selectedImage!.path,
+        duration: const Value.absent(),
+      );
+
+      try {
+        imageId = await _database.into(_database.filesdb).insert(file);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving image: $e')),
+        );
+        return;
+      }
+    }
+
     // Prepare user data
     final user = UsersCompanion.insert(
       name: _nameController.text,
       email: _emailController.text,
       isSaveChats: Value(_saveMessages),
-      photoId: Value(''),// Handle null value
+      photoId: imageId != null ? Value(imageId) : const Value.absent(),
       language: _selectedLanguage,
     );
 
     try {
       // Save user to database
       final userId = await _database.createUser(user);
-      if(userId != null){
+      if (userId != null) {
         final user = await _database.getUserById(userId);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('User saved successfully with ID: ${user?.id} NAME: ${user?.name} EMAIL: ${user?.email}' )),
+          SnackBar(content: Text(
+              'User saved successfully with ID: ${user?.id} NAME: ${user?.name} EMAIL: ${user?.email}')),
         );
       }
       // Fetch updated list of users
@@ -89,7 +126,6 @@ class _ConfigurationState extends State<Configuration> {
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +134,8 @@ class _ConfigurationState extends State<Configuration> {
         elevation: 0,
         title: const Text(
           'Configurations',
-          style: TextStyle(color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -107,15 +144,17 @@ class _ConfigurationState extends State<Configuration> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Center(
-              child: CircleAvatar(
-                radius: 80,
-                backgroundColor: Colors.blue,
-                child: Icon(
-                  Icons.person,
-                  color: Colors.white,
-                  size: 60,
-                ),
+            const SizedBox(height: 20),
+            Center(
+              child: _selectedImage == null
+                  ? const Text('No image selected.')
+                  : Image.file(File(_selectedImage!.path)),
+            ),
+            const SizedBox(height: 10),
+            Center(
+              child: ElevatedButton(
+                onPressed: _pickImage,
+                child: const Text('Select Image'),
               ),
             ),
             const SizedBox(height: 20),
@@ -146,10 +185,11 @@ class _ConfigurationState extends State<Configuration> {
             DropdownButtonFormField<String>(
               value: _selectedLanguage,
               items: ['English', 'Portuguese']
-                  .map((language) => DropdownMenuItem(
-                value: language,
-                child: Text(language),
-              ))
+                  .map((language) =>
+                  DropdownMenuItem(
+                    value: language,
+                    child: Text(language),
+                  ))
                   .toList(),
               onChanged: (value) {
                 setState(() {
