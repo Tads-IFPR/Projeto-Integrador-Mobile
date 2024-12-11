@@ -1,18 +1,23 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:laboratorio/components/chat/copy.dart';
+import 'package:laboratorio/components/chat/player.dart';
 import 'package:laboratorio/components/chat/reproduceText.dart';
 
 const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
 const _colorDark = Color.fromRGBO(80, 81, 79, 1);
 
 class Message extends StatelessWidget {
-  final String text;
+  final String? text;
+  final File? audio;
   final bool isReponse;
 
   const Message({
     super.key,
     required this.isReponse,
-    required this.text,
+    this.text,
+    this.audio,
   });
 
   @override
@@ -34,22 +39,22 @@ class Message extends StatelessWidget {
             ],
           ),
           padding: const EdgeInsets.all(16.0),
-          child:Text(
-            text,
+          child: text != null ? Text(
+            text ?? "",
             style: TextStyle(
               fontSize: 14,
               color: isReponse ? _colorDark : _colorWhite,
             ),
-          ),
+          ) : Player(audioFile: audio ?? File("")),
         ),
         isReponse ?
           Row(
             children: [
-              CopyButton(text: text),
-              Reproducetext(text: text)
+              CopyButton(text: text ?? ""),
+              Reproducetext(text: text ?? "")
             ],
           )
-          : const SizedBox.shrink(),
+        : const SizedBox.shrink(),
         isReponse ? const SizedBox(height: 16) : const SizedBox.shrink(),
       ],
     );
