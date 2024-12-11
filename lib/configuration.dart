@@ -14,34 +14,28 @@ class Configuration extends StatefulWidget {
 }
 
 class _ConfigurationState extends State<Configuration> {
-  // Controllers for text fields
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
-  // Variables to track form state
   String _selectedLanguage = 'English';
   bool _saveMessages = false;
 
-  // Database instance
   late AppDatabase _database;
   List<User> _users = [];
 
   @override
   void initState() {
     super.initState();
-    // Initialize the database
     _database = AppDatabase();
     _fetchUsers();
   }
 
   @override
   void dispose() {
-    // Clean up controllers
     _nameController.dispose();
     _emailController.dispose();
     _descriptionController.dispose();
-    // Close the database connection
     _database.close();
     super.dispose();
   }
@@ -55,7 +49,6 @@ class _ConfigurationState extends State<Configuration> {
 
   XFile? _selectedImage;
 
-  // Method to pick an image
   Future<void> _pickImage() async {
     final ImagePicker _picker = ImagePicker();
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
@@ -66,9 +59,7 @@ class _ConfigurationState extends State<Configuration> {
     }
   }
 
-  // Method to save user
   Future<void> _saveUser() async {
-    // Validate input
     if (_nameController.text.isEmpty || _emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Name and Email are required')),
@@ -76,7 +67,6 @@ class _ConfigurationState extends State<Configuration> {
       return;
     }
 
-    // Save the image and get the image ID
     int? imageId;
     if (_selectedImage != null) {
       final file = FilesdbCompanion.insert(
@@ -96,7 +86,6 @@ class _ConfigurationState extends State<Configuration> {
       }
     }
 
-    // Prepare user data
     final user = UsersCompanion.insert(
       name: _nameController.text,
       email: _emailController.text,
@@ -106,7 +95,6 @@ class _ConfigurationState extends State<Configuration> {
     );
 
     try {
-      // Save user to database
       final userId = await _database.createUser(user);
       if (userId != null) {
         final user = await _database.getUserById(userId);
@@ -115,12 +103,11 @@ class _ConfigurationState extends State<Configuration> {
               'User saved successfully with ID: ${user?.id} NAME: ${user?.name} EMAIL: ${user?.email}')),
         );
       }
-      // Fetch updated list of users
+
       await _fetchUsers();
       // Show success message
 
     } catch (e) {
-      // Handle any errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving user: $e')),
       );
