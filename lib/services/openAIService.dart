@@ -34,7 +34,7 @@ class OpenAIService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        return responseData['choices'][0]['message']['content']?.trim();
+        return utf8.decode(responseData['choices'][0]['message']['content']?.trim().codeUnits);
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
         return null;
@@ -64,7 +64,6 @@ class OpenAIService {
     );
     request.fields['model'] = 'whisper-1';
 
-    // return loremIpsum;
     try {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
