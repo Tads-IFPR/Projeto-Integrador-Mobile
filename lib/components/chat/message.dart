@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:laboratorio/components/chat/copy.dart';
 import 'package:laboratorio/components/chat/player.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:laboratorio/components/chat/reproduceText.dart';
 
 const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
@@ -39,13 +40,21 @@ class Message extends StatelessWidget {
             ],
           ),
           padding: const EdgeInsets.all(16.0),
-          child: text != null ? Text(
+          child: text != null && !isReponse ? Text(
             text ?? "",
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
-              color: isReponse ? _colorDark : _colorWhite,
+              color: _colorWhite,
             ),
-          ) : Player(audioFile: audio ?? File("")),
+          ) : (
+            audio != null
+              ? Player(audioFile: audio ?? File(""))
+              : Expanded(
+                child: Markdown(
+                  data: text ?? "",
+                )
+              )
+          ),
         ),
         isReponse ?
           Row(
@@ -60,4 +69,3 @@ class Message extends StatelessWidget {
     );
   }
 }
-
