@@ -10,7 +10,11 @@ import 'package:laboratorio/components/chat/message.dart';
 import 'package:laboratorio/components/chat/textBar.dart';
 
 class Chat extends StatefulWidget {
-  const Chat({super.key});
+  final ChatModel? chat;
+  const Chat({
+    super.key,
+    required this.chat,
+  });
 
   @override
   State<Chat> createState() => _ChatState();
@@ -29,11 +33,13 @@ class _ChatState extends State<Chat> {
     if (userInput.isEmpty) return;
     _controller.clear();
 
+    currentChat?.messages.add(MessageModel(isReponse: false, text: userInput));
     setState(() {
       messages.add(Message(isReponse: false, text: userInput));
     });
 
     final result = await openAIService.sendMessage(userInput);
+    currentChat?.messages.add(MessageModel(isReponse: true, text: result ?? 'Failed to get a response.'));
     setState(() {
       messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
     });
@@ -68,12 +74,14 @@ class _ChatState extends State<Chat> {
 
       if (resultAudio == null) return;
 
+      currentChat?.messages.add(MessageModel(isReponse: false, audio: audioFile));
       setState(() {
         messages.add(Message(isReponse: false, audio: audioFile));
       });
 
       final result = await openAIService.sendMessage(resultAudio);
 
+      currentChat?.messages.add(MessageModel(isReponse: true, text: result ?? 'Failed to get a response.'));
       setState(() {
         messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
       });
@@ -94,6 +102,25 @@ class _ChatState extends State<Chat> {
   void initState() {
     super.initState();
     _initializeRecorder();
+
+    if (widget.chat != null && widget.chat?.messages.isNotEmpty == true) {
+      List<Message> messagesFromChat = [];
+
+      for (var message in widget.chat?.messages ?? []) {
+        if (message.text != null) {
+          messagesFromChat.add(Message(isReponse: message.isReponse, text: message.text));
+        } else if (message.audio != null) {
+          messagesFromChat.add(Message(isReponse: message.isReponse, audio: message.audio));
+        }
+      }
+
+      setState(() {
+        messages = messagesFromChat;
+      });
+    } else {
+      currentChat = ChatModel(messages: []);
+      chats.add(currentChat!);
+    }
   }
 
   @override

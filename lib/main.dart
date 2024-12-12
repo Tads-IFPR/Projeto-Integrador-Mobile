@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:laboratorio/chat.dart';
+import 'package:laboratorio/screens/chat.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
+import 'package:laboratorio/components/chat/message.dart';
+import 'package:laboratorio/screens/history.dart';
 import 'package:laboratorio/services/openAIService.dart';
 
 void main() {
@@ -8,6 +12,30 @@ void main() {
 }
 
 final openAIService = OpenAIService('key-here');
+
+//this should be refactored
+class MessageModel {
+  final String? text;
+  final bool isReponse;
+  final File? audio;
+
+  MessageModel({
+    required this.isReponse,
+    this.text,
+    this.audio,
+  });
+}
+
+class ChatModel {
+  List<MessageModel> messages = [];
+  ChatModel({
+    required this.messages,
+  });
+}
+
+ChatModel? currentChat;
+
+List<ChatModel> chats = [];
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -17,17 +45,30 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  final pages = [
-    const Chat(),
-    const Text('History'),
-    const Text('Profile'),
-  ];
+  late List<Widget> pages;
+
+  @override
+  void initState() {
+    super.initState();
+    pages = [
+      Chat(chat: currentChat),
+      History(onChatTap: onChatTap),
+      const Text('Profile'),
+    ];
+  }
 
   var _selectedIndex = 0;
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+    });
+  }
+
+  void onChatTap(int index) {
+    setState(() {
+      pages[0] = Chat(chat: chats[index]);
+      _selectedIndex = 0;
     });
   }
 
