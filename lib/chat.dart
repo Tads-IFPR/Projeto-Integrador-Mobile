@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:laboratorio/main.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:laboratorio/components/chat/message.dart';
 import 'package:laboratorio/components/chat/textBar.dart';
-import 'package:laboratorio/services/openAIService.dart';
 
 class Chat extends StatefulWidget {
   const Chat({super.key});
@@ -17,7 +17,6 @@ class Chat extends StatefulWidget {
 }
 
 class _ChatState extends State<Chat> {
-  final _openAIService = OpenAIService('key-here');
   final _controller = TextEditingController();
   List<Message> messages = [];
 
@@ -34,7 +33,7 @@ class _ChatState extends State<Chat> {
       messages.add(Message(isReponse: false, text: userInput));
     });
 
-    final result = await _openAIService.sendMessage(userInput);
+    final result = await openAIService.sendMessage(userInput);
     setState(() {
       messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
     });
@@ -42,7 +41,8 @@ class _ChatState extends State<Chat> {
 
   Future<void> _startRecording() async {
     final directory = await getApplicationDocumentsDirectory();
-    final filePath = '${directory.path}/recording.m4a';
+    final fileName = 'audio-${DateTime.now().millisecondsSinceEpoch}.m4a';
+    final filePath = '${directory.path}/$fileName';
 
     await _recorder.startRecorder(
       toFile: filePath,
@@ -64,7 +64,7 @@ class _ChatState extends State<Chat> {
 
     if (_filePath != null) {
       final audioFile = File(_filePath!);
-      final resultAudio = await _openAIService.transcribeAudio(audioFile);
+      final resultAudio = await openAIService.transcribeAudio(audioFile);
 
       if (resultAudio == null) return;
 
@@ -72,7 +72,7 @@ class _ChatState extends State<Chat> {
         messages.add(Message(isReponse: false, audio: audioFile));
       });
 
-      final result = await _openAIService.sendMessage(resultAudio);
+      final result = await openAIService.sendMessage(resultAudio);
 
       setState(() {
         messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
