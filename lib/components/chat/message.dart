@@ -51,6 +51,7 @@ class Message extends StatelessWidget {
               ? Player(audioFile: audio ?? File(""))
               : Expanded(
                 child: Markdown(
+                  shrinkWrap: true,
                   data: text ?? "",
                 )
               )
