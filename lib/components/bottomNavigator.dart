@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
-import 'package:laboratorio/chat.dart';
 
 const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
 const _colorPrimary = Color.fromRGBO(36, 123, 160, 1);
 const _colorDark = Color.fromRGBO(80, 81, 79, 1);
 
 class BottomNavigator extends StatefulWidget {
-  const BottomNavigator({super.key});
+  final ValueChanged<int>? onItemTapped;
+  final int selectedIndex;
+
+  BottomNavigator({
+    super.key,
+    required this.onItemTapped,
+    required this.selectedIndex,
+  });
 
   @override
-  State<BottomNavigator> createState() => _BottomNavigatorState();
+  State<BottomNavigator> createState() => BottomNavigatorState();
 }
 
-class _BottomNavigatorState extends State<BottomNavigator> {
-  var _selectedIndex = 0;
-
+class BottomNavigatorState extends State<BottomNavigator> {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      onTap: _onItemTapped,
+      onTap: widget.onItemTapped,
       backgroundColor: _colorWhite,
       selectedItemColor: _colorDark,
-      currentIndex: _selectedIndex,
+      currentIndex: widget.selectedIndex,
       selectedIconTheme: const IconThemeData(color: _colorPrimary),
       items: const [
         BottomNavigationBarItem(
@@ -38,18 +42,5 @@ class _BottomNavigatorState extends State<BottomNavigator> {
         ),
       ],
     );
-  }
-
-  void _onItemTapped(int index) {
-    _selectedIndex = index;
-    switch (index) {
-      case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Chat()),
-        );
-        break; 
-      default:
-    }
   }
 }
