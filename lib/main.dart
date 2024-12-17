@@ -1,78 +1,92 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:laboratorio/configuration.dart';
+import 'package:laboratorio/screens/chat.dart';
+import 'package:laboratorio/components/bottomNavigator.dart';
+import 'package:laboratorio/components/chat/message.dart';
+import 'package:laboratorio/screens/history.dart';
+import 'package:laboratorio/services/openAIService.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const App());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+final openAIService = OpenAIService('key-here');
 
-  // This widget is the root of your application.
+//this should be refactored
+class MessageModel {
+  final String? text;
+  final bool isReponse;
+  final File? audio;
+
+  MessageModel({
+    required this.isReponse,
+    this.text,
+    this.audio,
+  });
+}
+
+class ChatModel {
+  List<MessageModel> messages = [];
+  ChatModel({
+    required this.messages,
+  });
+}
+
+ChatModel? currentChat;
+
+List<ChatModel> chats = [];
+
+class App extends StatefulWidget {
+  const App({super.key});
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Chungão teste',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Home projeto'),
-    );
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  late List<Widget> pages;
+
+  @override
+  void initState() {
+    super.initState();
+    pages = [
+      Chat(chat: currentChat),
+      History(onChatTap: onChatTap),
+      const Text('Profile'),
+    ];
   }
-}
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
+  var _selectedIndex = 0;
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
+  void _onItemTapped(int index) {
     setState(() {
-      _counter++;
+      _selectedIndex = index;
+    });
+  }
+
+  void onChatTap(int index) {
+    setState(() {
+      pages[0] = Chat(chat: chats[index]);
+      _selectedIndex = 0;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+    return MaterialApp(
+      title: 'Main Page',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Configuration()),
-                );
-              },
-              child: const Text('Go to Configurations'),
-            ), 
-          ],
+      home: Scaffold(
+        body: pages[_selectedIndex],
+        bottomNavigationBar: BottomNavigator(
+          onItemTapped: _onItemTapped,
+          selectedIndex: _selectedIndex,
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), 
+      )
     );
   }
 }
