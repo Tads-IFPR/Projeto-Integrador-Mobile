@@ -38,7 +38,7 @@ class _ChatState extends State<ChatScreen> {
 
     final result = await openAIService.sendMessage(userInput);
     setState(() {
-      messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
+      messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
     });
   }
 
@@ -76,9 +76,8 @@ class _ChatState extends State<ChatScreen> {
       });
 
       final result = await openAIService.sendMessage(resultAudio);
-
       setState(() {
-        messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
+        messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
       });
     }
   }
@@ -94,12 +93,12 @@ class _ChatState extends State<ChatScreen> {
   }
 
   @override
-  void initState() async {
+  void initState() {
     super.initState();
     _initializeRecorder();
 
     if (chatDAO.currentChat != null) {
-      var tempMessages = await chatDAO.getMessagesForChat(chatDAO.currentChat!.id);
+      var tempMessages = chatDAO.chatMessages;
       List<Message> messagesFromChat = [];
 
       for (var message in tempMessages) {
