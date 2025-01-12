@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:laboratorio/dao/chat.dart';
 import 'package:laboratorio/main.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -9,18 +10,16 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:laboratorio/components/chat/message.dart';
 import 'package:laboratorio/components/chat/textBar.dart';
 
-class Chat extends StatefulWidget {
-  final ChatModel? chat;
-  const Chat({
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({
     super.key,
-    required this.chat,
   });
 
   @override
-  State<Chat> createState() => _ChatState();
+  State<ChatScreen> createState() => _ChatState();
 }
 
-class _ChatState extends State<Chat> {
+class _ChatState extends State<ChatScreen> {
   final _controller = TextEditingController();
   List<Message> messages = [];
 
@@ -33,13 +32,11 @@ class _ChatState extends State<Chat> {
     if (userInput.isEmpty) return;
     _controller.clear();
 
-    currentChat?.messages.add(MessageModel(isReponse: false, text: userInput));
     setState(() {
       messages.add(Message(isReponse: false, text: userInput));
     });
 
     final result = await openAIService.sendMessage(userInput);
-    currentChat?.messages.add(MessageModel(isReponse: true, text: result ?? 'Failed to get a response.'));
     setState(() {
       messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
     });
@@ -74,14 +71,12 @@ class _ChatState extends State<Chat> {
 
       if (resultAudio == null) return;
 
-      currentChat?.messages.add(MessageModel(isReponse: false, audio: audioFile));
       setState(() {
         messages.add(Message(isReponse: false, audio: audioFile));
       });
 
       final result = await openAIService.sendMessage(resultAudio);
 
-      currentChat?.messages.add(MessageModel(isReponse: true, text: result ?? 'Failed to get a response.'));
       setState(() {
         messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
       });
@@ -99,27 +94,22 @@ class _ChatState extends State<Chat> {
   }
 
   @override
-  void initState() {
+  void initState() async {
     super.initState();
     _initializeRecorder();
 
-    if (widget.chat != null && widget.chat?.messages.isNotEmpty == true) {
+    if (chatDAO.currentChat != null) {
+      var tempMessages = await chatDAO.getMessagesForChat(chatDAO.currentChat!.id);
       List<Message> messagesFromChat = [];
 
-      for (var message in widget.chat?.messages ?? []) {
-        if (message.text != null) {
-          messagesFromChat.add(Message(isReponse: message.isReponse, text: message.text));
-        } else if (message.audio != null) {
-          messagesFromChat.add(Message(isReponse: message.isReponse, audio: message.audio));
-        }
+      for (var message in tempMessages) {
+        messagesFromChat.add(Message(isReponse: message.isBot, text: message.messageText));
+        // messagesFromChat.add(Message(isReponse: message.isBot, audio: message.audio));
       }
 
       setState(() {
         messages = messagesFromChat;
       });
-    } else {
-      currentChat = ChatModel(messages: []);
-      chats.add(currentChat!);
     }
   }
 

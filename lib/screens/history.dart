@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:laboratorio/main.dart';
+import 'package:laboratorio/dao/chat.dart';
 
 class History extends StatelessWidget {
   final Function onChatTap;
@@ -16,17 +16,11 @@ class History extends StatelessWidget {
         title: const Text('Messages'),
       ),
       body: ListView.builder(
-        itemCount: chats.length,
+        itemCount: chatDAO.allChats.length,
         itemBuilder: (context, index) {
-          final chat = chats[index];
           return GestureDetector(
             onTap: () => onChatTap(index),
-            child: Text(chat.messages[chat.messages.length - 1].text?? (
-                chat.messages[chat.messages.length - 1].audio != null
-                ? 'Audio'
-                : ''
-              )
-            )
+            child: Text(chatDAO.allChats[index].title)
           );
         },
       ),
