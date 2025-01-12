@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:laboratorio/dao/chat.dart';
+import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/screens/chat.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
-import 'package:laboratorio/components/chat/message.dart';
 import 'package:laboratorio/screens/history.dart';
 import 'package:laboratorio/services/openAIService.dart';
 
@@ -11,31 +10,7 @@ void main() {
   runApp(const App());
 }
 
-final openAIService = OpenAIService('key-here');
-
-//this should be refactored
-class MessageModel {
-  final String? text;
-  final bool isReponse;
-  final File? audio;
-
-  MessageModel({
-    required this.isReponse,
-    this.text,
-    this.audio,
-  });
-}
-
-class ChatModel {
-  List<MessageModel> messages = [];
-  ChatModel({
-    required this.messages,
-  });
-}
-
-ChatModel? currentChat;
-
-List<ChatModel> chats = [];
+final openAIService = OpenAIService('your-token-here');
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -51,7 +26,7 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     pages = [
-      Chat(chat: currentChat),
+      const ChatScreen(),
       History(onChatTap: onChatTap),
       const Text('Profile'),
     ];
@@ -65,9 +40,11 @@ class _AppState extends State<App> {
     });
   }
 
-  void onChatTap(int index) {
+  void onChatTap(int index) async {
+    chatDAO.currentChat = chatDAO.allChats[index];
+
     setState(() {
-      pages[0] = Chat(chat: chats[index]);
+      pages[0] = const ChatScreen();
       _selectedIndex = 0;
     });
   }
@@ -88,5 +65,11 @@ class _AppState extends State<App> {
         ),
       )
     );
+  }
+
+  @override
+  void dispose() {
+    db.close();
+    super.dispose();
   }
 }
