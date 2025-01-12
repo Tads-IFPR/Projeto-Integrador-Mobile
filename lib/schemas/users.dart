@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:laboratorio/model/filesdb.dart';
+import 'package:laboratorio/schemas/files.dart';
 
 class Users extends Table {
   IntColumn get id => integer().autoIncrement()();
