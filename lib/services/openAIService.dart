@@ -12,7 +12,7 @@ class OpenAIService {
 
   final String _baseUrl = 'https://api.openai.com/v1';
 
-  Future<String?> sendMessage(String prompt, {String model = 'gpt-4o-mini'}) async {
+  Future<Map<String, String>?> sendMessage(String prompt, {String model = 'gpt-4o-mini'}) async {
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
@@ -23,10 +23,11 @@ class OpenAIService {
       'model': model,
       'messages': [
         {'role': 'system', 'content': 'Você é um professor de programação.'},
+        {'role': 'system', 'content': 'Retorne um json no seguinte formato: {"title": \$title,"response": \$response}'},
         {'role': 'user', 'content': prompt}
       ],
       'temperature': 0.7,
-      'max_tokens': 150,
+      'max_tokens': 250,
     });
 
     try {
@@ -34,7 +35,14 @@ class OpenAIService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        return utf8.decode(responseData['choices'][0]['message']['content']?.trim().codeUnits);
+        final aiResp = jsonDecode(responseData['choices'][0]['message']['content']);
+        final message = utf8.decode(aiResp?.message?.trim().codeUnits);
+        final title = utf8.decode(aiResp?.title?.trim().codeUnits);
+        
+        return {
+          'title': title,
+          'response': message,
+        };
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
         return null;
