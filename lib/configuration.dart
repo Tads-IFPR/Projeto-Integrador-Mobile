@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:laboratorio/database/database.dart';
-import 'package:laboratorio/model/user.dart';
 import 'package:image_picker/image_picker.dart';
 
 class Configuration extends StatefulWidget {
@@ -21,13 +20,11 @@ class _ConfigurationState extends State<Configuration> {
   String _selectedLanguage = 'English';
   bool _saveMessages = false;
 
-  late AppDatabase _database;
   List<User> _users = [];
 
   @override
   void initState() {
     super.initState();
-    _database = AppDatabase();
     _fetchUsers();
   }
 
@@ -36,12 +33,11 @@ class _ConfigurationState extends State<Configuration> {
     _nameController.dispose();
     _emailController.dispose();
     _descriptionController.dispose();
-    _database.close();
     super.dispose();
   }
 
   Future<void> _fetchUsers() async {
-    final users = await _database.getAllUsers();
+    final users = await db.getAllRecords(db.users);
     setState(() {
       _users = users;
     });
@@ -77,7 +73,7 @@ class _ConfigurationState extends State<Configuration> {
       );
 
       try {
-        imageId = await _database.into(_database.filesdb).insert(file);
+        imageId = await db.into(db.filesdb).insert(file);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving image: $e')),
@@ -95,9 +91,9 @@ class _ConfigurationState extends State<Configuration> {
     );
 
     try {
-      final userId = await _database.createUser(user);
+      final userId = await db.createRecord(db.users, user);
       if (userId != null) {
-        final user = await _database.getUserById(userId);
+        final user = await db.getRecordById(db.users, userId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(
               'User saved successfully with ID: ${user?.id} NAME: ${user?.name} EMAIL: ${user?.email}')),
