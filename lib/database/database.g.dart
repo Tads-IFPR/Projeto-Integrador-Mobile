@@ -832,6 +832,11 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+      'title', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
   @override
   late final GeneratedColumn<String> userId = GeneratedColumn<String>(
@@ -857,7 +862,7 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, userId, createdAt, updatedAt, deletedAt];
+      [id, title, userId, createdAt, updatedAt, deletedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -870,6 +875,12 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+          _titleMeta, title.isAcceptableOrUnknown(data['title']!, _titleMeta));
+    } else if (isInserting) {
+      context.missing(_titleMeta);
     }
     if (data.containsKey('user_id')) {
       context.handle(_userIdMeta,
@@ -906,6 +917,8 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
     return Chat(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      title: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       userId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
       createdAt: attachedDatabase.typeMapping
@@ -925,12 +938,14 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
 
 class Chat extends DataClass implements Insertable<Chat> {
   final int id;
+  final String title;
   final String userId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime deletedAt;
   const Chat(
       {required this.id,
+      required this.title,
       required this.userId,
       required this.createdAt,
       required this.updatedAt,
@@ -939,6 +954,7 @@ class Chat extends DataClass implements Insertable<Chat> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
     map['user_id'] = Variable<String>(userId);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -949,6 +965,7 @@ class Chat extends DataClass implements Insertable<Chat> {
   ChatsCompanion toCompanion(bool nullToAbsent) {
     return ChatsCompanion(
       id: Value(id),
+      title: Value(title),
       userId: Value(userId),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -961,6 +978,7 @@ class Chat extends DataClass implements Insertable<Chat> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Chat(
       id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
       userId: serializer.fromJson<String>(json['userId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -972,6 +990,7 @@ class Chat extends DataClass implements Insertable<Chat> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
       'userId': serializer.toJson<String>(userId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -981,12 +1000,14 @@ class Chat extends DataClass implements Insertable<Chat> {
 
   Chat copyWith(
           {int? id,
+          String? title,
           String? userId,
           DateTime? createdAt,
           DateTime? updatedAt,
           DateTime? deletedAt}) =>
       Chat(
         id: id ?? this.id,
+        title: title ?? this.title,
         userId: userId ?? this.userId,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
@@ -995,6 +1016,7 @@ class Chat extends DataClass implements Insertable<Chat> {
   Chat copyWithCompanion(ChatsCompanion data) {
     return Chat(
       id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
       userId: data.userId.present ? data.userId.value : this.userId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1006,6 +1028,7 @@ class Chat extends DataClass implements Insertable<Chat> {
   String toString() {
     return (StringBuffer('Chat(')
           ..write('id: $id, ')
+          ..write('title: $title, ')
           ..write('userId: $userId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -1015,12 +1038,14 @@ class Chat extends DataClass implements Insertable<Chat> {
   }
 
   @override
-  int get hashCode => Object.hash(id, userId, createdAt, updatedAt, deletedAt);
+  int get hashCode =>
+      Object.hash(id, title, userId, createdAt, updatedAt, deletedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Chat &&
           other.id == this.id &&
+          other.title == this.title &&
           other.userId == this.userId &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
@@ -1029,12 +1054,14 @@ class Chat extends DataClass implements Insertable<Chat> {
 
 class ChatsCompanion extends UpdateCompanion<Chat> {
   final Value<int> id;
+  final Value<String> title;
   final Value<String> userId;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime> deletedAt;
   const ChatsCompanion({
     this.id = const Value.absent(),
+    this.title = const Value.absent(),
     this.userId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1042,16 +1069,19 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
   });
   ChatsCompanion.insert({
     this.id = const Value.absent(),
+    required String title,
     required String userId,
     required DateTime createdAt,
     required DateTime updatedAt,
     required DateTime deletedAt,
-  })  : userId = Value(userId),
+  })  : title = Value(title),
+        userId = Value(userId),
         createdAt = Value(createdAt),
         updatedAt = Value(updatedAt),
         deletedAt = Value(deletedAt);
   static Insertable<Chat> custom({
     Expression<int>? id,
+    Expression<String>? title,
     Expression<String>? userId,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1059,6 +1089,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (title != null) 'title': title,
       if (userId != null) 'user_id': userId,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1068,12 +1099,14 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
 
   ChatsCompanion copyWith(
       {Value<int>? id,
+      Value<String>? title,
       Value<String>? userId,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<DateTime>? deletedAt}) {
     return ChatsCompanion(
       id: id ?? this.id,
+      title: title ?? this.title,
       userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1086,6 +1119,9 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
     }
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
@@ -1106,6 +1142,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
   String toString() {
     return (StringBuffer('ChatsCompanion(')
           ..write('id: $id, ')
+          ..write('title: $title, ')
           ..write('userId: $userId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -2640,6 +2677,7 @@ typedef $$CategoriesTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function({bool categoryChatRefs})>;
 typedef $$ChatsTableCreateCompanionBuilder = ChatsCompanion Function({
   Value<int> id,
+  required String title,
   required String userId,
   required DateTime createdAt,
   required DateTime updatedAt,
@@ -2647,6 +2685,7 @@ typedef $$ChatsTableCreateCompanionBuilder = ChatsCompanion Function({
 });
 typedef $$ChatsTableUpdateCompanionBuilder = ChatsCompanion Function({
   Value<int> id,
+  Value<String> title,
   Value<String> userId,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -2696,6 +2735,9 @@ class $$ChatsTableFilterComposer extends Composer<_$AppDatabase, $ChatsTable> {
   });
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnFilters(column));
@@ -2764,6 +2806,9 @@ class $$ChatsTableOrderingComposer
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get title => $composableBuilder(
+      column: $table.title, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 
@@ -2788,6 +2833,9 @@ class $$ChatsTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
 
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
@@ -2868,6 +2916,7 @@ class $$ChatsTableTableManager extends RootTableManager<
               $$ChatsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
+            Value<String> title = const Value.absent(),
             Value<String> userId = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -2875,6 +2924,7 @@ class $$ChatsTableTableManager extends RootTableManager<
           }) =>
               ChatsCompanion(
             id: id,
+            title: title,
             userId: userId,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -2882,6 +2932,7 @@ class $$ChatsTableTableManager extends RootTableManager<
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
+            required String title,
             required String userId,
             required DateTime createdAt,
             required DateTime updatedAt,
@@ -2889,6 +2940,7 @@ class $$ChatsTableTableManager extends RootTableManager<
           }) =>
               ChatsCompanion.insert(
             id: id,
+            title: title,
             userId: userId,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -2977,7 +3029,7 @@ final class $$MessagesTableReferences
 
   $$ChatsTableProcessedTableManager get chatId {
     final manager = $$ChatsTableTableManager($_db, $_db.chats)
-        .filter((f) => f.id($_item.chatId!));
+        .filter((f) => f.id($_item.chatId));
     final item = $_typedResult.readTableOrNull(_chatIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -3320,7 +3372,7 @@ final class $$CategoryChatTableReferences extends BaseReferences<_$AppDatabase,
 
   $$CategoriesTableProcessedTableManager get categoryId {
     final manager = $$CategoriesTableTableManager($_db, $_db.categories)
-        .filter((f) => f.id($_item.categoryId!));
+        .filter((f) => f.id($_item.categoryId));
     final item = $_typedResult.readTableOrNull(_categoryIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -3332,7 +3384,7 @@ final class $$CategoryChatTableReferences extends BaseReferences<_$AppDatabase,
 
   $$ChatsTableProcessedTableManager get chatId {
     final manager = $$ChatsTableTableManager($_db, $_db.chats)
-        .filter((f) => f.id($_item.chatId!));
+        .filter((f) => f.id($_item.chatId));
     final item = $_typedResult.readTableOrNull(_chatIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -3630,7 +3682,7 @@ final class $$FileMessageTableReferences
 
   $$MessagesTableProcessedTableManager get messageId {
     final manager = $$MessagesTableTableManager($_db, $_db.messages)
-        .filter((f) => f.id($_item.messageId!));
+        .filter((f) => f.id($_item.messageId));
     final item = $_typedResult.readTableOrNull(_messageIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
