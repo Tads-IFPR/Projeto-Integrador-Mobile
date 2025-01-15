@@ -15,7 +15,7 @@ class ChatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        isFirst ? const SizedBox.shrink() : const SizedBox(height: 16),
+        isFirst ? const SizedBox.shrink() : const SizedBox(height: 8),
         Container(
           alignment: Alignment.centerLeft,
           decoration: BoxDecoration(
