@@ -25,11 +25,7 @@ class _AppState extends State<App> {
   @override
   void initState() {
     super.initState();
-    pages = [
-      const ChatScreen(),
-      History(onChatTap: onChatTap),
-      const Text('Profile'),
-    ];
+    refreshPages();
   }
 
   var _selectedIndex = 0;
@@ -54,9 +50,22 @@ class _AppState extends State<App> {
     });
   }
 
+  void onDeleteChat(int index) async {
+    chatDAO.deleteChat(chatDAO.allChats[index].id);
+
+    setState(() {
+      refreshPages();
+      _selectedIndex = 0;
+    });
+  }
+
   void refreshPages() {
     setState(() {
-      pages[0] = const ChatScreen();
+      pages = [
+        const ChatScreen(),
+        History(onChatTap: onChatTap, onDeleteChat: onDeleteChat),
+        const Text('Profile'),
+      ];
     });
   }
 

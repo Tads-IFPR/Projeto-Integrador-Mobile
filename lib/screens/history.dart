@@ -4,10 +4,12 @@ import 'package:laboratorio/dao/chat.dart';
 
 class History extends StatelessWidget {
   final Function onChatTap;
+  final Function onDeleteChat;
 
   const History({
     super.key,
     required this.onChatTap,
+    required this.onDeleteChat,
   });
 
   @override
@@ -23,6 +25,7 @@ class History extends StatelessWidget {
           itemBuilder: (context, index) {
             return GestureDetector(
               onTap: () => onChatTap(index),
+              onLongPressEnd: onDeleteChat(index),
               child: ChatCard(text: chatDAO.allChats[index].title, isFirst: index == 0),
             );
           },

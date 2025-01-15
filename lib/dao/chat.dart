@@ -19,6 +19,16 @@ class ChatDAO extends AppDatabase {
     }
   }
 
+  Future<void> deleteChat(int chatId) async {
+    await deleteRecordById(chats, chatId);
+    _allChats.removeWhere((element) => element.id == chatId);
+
+    if (_currentChat?.id == chatId) {
+      _currentChat = null;
+      _messages = [];
+    }
+  }
+
   Chat? get currentChat => _currentChat;
 
   Future<List<Message>> getMessagesForChat(int chatId) {
