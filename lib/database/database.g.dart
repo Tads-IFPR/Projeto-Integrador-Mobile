@@ -839,27 +839,31 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
       type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
   @override
-  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
-      'user_id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+  late final GeneratedColumn<int> userId = GeneratedColumn<int>(
+      'user_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   static const VerificationMeta _deletedAtMeta =
       const VerificationMeta('deletedAt');
   @override
   late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-      'deleted_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      'deleted_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
       [id, title, userId, createdAt, updatedAt, deletedAt];
@@ -885,26 +889,18 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
     if (data.containsKey('user_id')) {
       context.handle(_userIdMeta,
           userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta));
-    } else if (isInserting) {
-      context.missing(_userIdMeta);
     }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
     }
     if (data.containsKey('deleted_at')) {
       context.handle(_deletedAtMeta,
           deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
-    } else if (isInserting) {
-      context.missing(_deletedAtMeta);
     }
     return context;
   }
@@ -920,13 +916,13 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
       title: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}title'])!,
       userId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}user_id'])!,
+          .read(DriftSqlType.int, data['${effectivePrefix}user_id']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       deletedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at'])!,
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
     );
   }
 
@@ -939,26 +935,30 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
 class Chat extends DataClass implements Insertable<Chat> {
   final int id;
   final String title;
-  final String userId;
+  final int? userId;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final DateTime deletedAt;
+  final DateTime? deletedAt;
   const Chat(
       {required this.id,
       required this.title,
-      required this.userId,
+      this.userId,
       required this.createdAt,
       required this.updatedAt,
-      required this.deletedAt});
+      this.deletedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['title'] = Variable<String>(title);
-    map['user_id'] = Variable<String>(userId);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<int>(userId);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
-    map['deleted_at'] = Variable<DateTime>(deletedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -966,10 +966,13 @@ class Chat extends DataClass implements Insertable<Chat> {
     return ChatsCompanion(
       id: Value(id),
       title: Value(title),
-      userId: Value(userId),
+      userId:
+          userId == null && nullToAbsent ? const Value.absent() : Value(userId),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
-      deletedAt: Value(deletedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -979,10 +982,10 @@ class Chat extends DataClass implements Insertable<Chat> {
     return Chat(
       id: serializer.fromJson<int>(json['id']),
       title: serializer.fromJson<String>(json['title']),
-      userId: serializer.fromJson<String>(json['userId']),
+      userId: serializer.fromJson<int?>(json['userId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      deletedAt: serializer.fromJson<DateTime>(json['deletedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -991,27 +994,27 @@ class Chat extends DataClass implements Insertable<Chat> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'title': serializer.toJson<String>(title),
-      'userId': serializer.toJson<String>(userId),
+      'userId': serializer.toJson<int?>(userId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'deletedAt': serializer.toJson<DateTime>(deletedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
   Chat copyWith(
           {int? id,
           String? title,
-          String? userId,
+          Value<int?> userId = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt,
-          DateTime? deletedAt}) =>
+          Value<DateTime?> deletedAt = const Value.absent()}) =>
       Chat(
         id: id ?? this.id,
         title: title ?? this.title,
-        userId: userId ?? this.userId,
+        userId: userId.present ? userId.value : this.userId,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
-        deletedAt: deletedAt ?? this.deletedAt,
+        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
       );
   Chat copyWithCompanion(ChatsCompanion data) {
     return Chat(
@@ -1055,10 +1058,10 @@ class Chat extends DataClass implements Insertable<Chat> {
 class ChatsCompanion extends UpdateCompanion<Chat> {
   final Value<int> id;
   final Value<String> title;
-  final Value<String> userId;
+  final Value<int?> userId;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
-  final Value<DateTime> deletedAt;
+  final Value<DateTime?> deletedAt;
   const ChatsCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
@@ -1070,19 +1073,15 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
   ChatsCompanion.insert({
     this.id = const Value.absent(),
     required String title,
-    required String userId,
-    required DateTime createdAt,
-    required DateTime updatedAt,
-    required DateTime deletedAt,
-  })  : title = Value(title),
-        userId = Value(userId),
-        createdAt = Value(createdAt),
-        updatedAt = Value(updatedAt),
-        deletedAt = Value(deletedAt);
+    this.userId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+  }) : title = Value(title);
   static Insertable<Chat> custom({
     Expression<int>? id,
     Expression<String>? title,
-    Expression<String>? userId,
+    Expression<int>? userId,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? deletedAt,
@@ -1100,10 +1099,10 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
   ChatsCompanion copyWith(
       {Value<int>? id,
       Value<String>? title,
-      Value<String>? userId,
+      Value<int?>? userId,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
-      Value<DateTime>? deletedAt}) {
+      Value<DateTime?>? deletedAt}) {
     return ChatsCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
@@ -1124,7 +1123,7 @@ class ChatsCompanion extends UpdateCompanion<Chat> {
       map['title'] = Variable<String>(title.value);
     }
     if (userId.present) {
-      map['user_id'] = Variable<String>(userId.value);
+      map['user_id'] = Variable<int>(userId.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -1185,13 +1184,17 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
   @override
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   static const VerificationMeta _updatedAtMeta =
       const VerificationMeta('updatedAt');
   @override
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
   static const VerificationMeta _isBotMeta = const VerificationMeta('isBot');
   @override
   late final GeneratedColumn<bool> isBot = GeneratedColumn<bool>(
@@ -1231,14 +1234,10 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
     }
     if (data.containsKey('updated_at')) {
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
     }
     if (data.containsKey('is_bot')) {
       context.handle(
@@ -1412,13 +1411,11 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.id = const Value.absent(),
     required int chatId,
     required String messageText,
-    required DateTime createdAt,
-    required DateTime updatedAt,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     required bool isBot,
   })  : chatId = Value(chatId),
         messageText = Value(messageText),
-        createdAt = Value(createdAt),
-        updatedAt = Value(updatedAt),
         isBot = Value(isBot);
   static Insertable<Message> custom({
     Expression<int>? id,
@@ -2678,18 +2675,18 @@ typedef $$CategoriesTableProcessedTableManager = ProcessedTableManager<
 typedef $$ChatsTableCreateCompanionBuilder = ChatsCompanion Function({
   Value<int> id,
   required String title,
-  required String userId,
-  required DateTime createdAt,
-  required DateTime updatedAt,
-  required DateTime deletedAt,
+  Value<int?> userId,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
 });
 typedef $$ChatsTableUpdateCompanionBuilder = ChatsCompanion Function({
   Value<int> id,
   Value<String> title,
-  Value<String> userId,
+  Value<int?> userId,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
-  Value<DateTime> deletedAt,
+  Value<DateTime?> deletedAt,
 });
 
 final class $$ChatsTableReferences
@@ -2739,7 +2736,7 @@ class $$ChatsTableFilterComposer extends Composer<_$AppDatabase, $ChatsTable> {
   ColumnFilters<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get userId => $composableBuilder(
+  ColumnFilters<int> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
@@ -2809,7 +2806,7 @@ class $$ChatsTableOrderingComposer
   ColumnOrderings<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get userId => $composableBuilder(
+  ColumnOrderings<int> get userId => $composableBuilder(
       column: $table.userId, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
@@ -2837,7 +2834,7 @@ class $$ChatsTableAnnotationComposer
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
 
-  GeneratedColumn<String> get userId =>
+  GeneratedColumn<int> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
@@ -2917,10 +2914,10 @@ class $$ChatsTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<String> title = const Value.absent(),
-            Value<String> userId = const Value.absent(),
+            Value<int?> userId = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
-            Value<DateTime> deletedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
           }) =>
               ChatsCompanion(
             id: id,
@@ -2933,10 +2930,10 @@ class $$ChatsTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String title,
-            required String userId,
-            required DateTime createdAt,
-            required DateTime updatedAt,
-            required DateTime deletedAt,
+            Value<int?> userId = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
           }) =>
               ChatsCompanion.insert(
             id: id,
@@ -3007,8 +3004,8 @@ typedef $$MessagesTableCreateCompanionBuilder = MessagesCompanion Function({
   Value<int> id,
   required int chatId,
   required String messageText,
-  required DateTime createdAt,
-  required DateTime updatedAt,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
   required bool isBot,
 });
 typedef $$MessagesTableUpdateCompanionBuilder = MessagesCompanion Function({
@@ -3271,8 +3268,8 @@ class $$MessagesTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required int chatId,
             required String messageText,
-            required DateTime createdAt,
-            required DateTime updatedAt,
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
             required bool isBot,
           }) =>
               MessagesCompanion.insert(
