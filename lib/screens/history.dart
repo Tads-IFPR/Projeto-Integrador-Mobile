@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laboratorio/components/history/chatCard.dart';
 import 'package:laboratorio/dao/chat.dart';
 
 class History extends StatelessWidget {
@@ -15,14 +16,17 @@ class History extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Messages'),
       ),
-      body: ListView.builder(
-        itemCount: chatDAO.allChats.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () => onChatTap(index),
-            child: Text(chatDAO.allChats[index].title)
-          );
-        },
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView.builder(
+          itemCount: chatDAO.allChats.length,
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () => onChatTap(index),
+              child: ChatCard(text: chatDAO.allChats[index].title, isFirst: index == 0),
+            );
+          },
+        )
       ),
     );
   }
