@@ -32,13 +32,13 @@ class _ChatState extends State<ChatScreen> {
     if (userInput.isEmpty) return;
     _controller.clear();
 
-    chatDAO.addMessage('User message', userInput, false);
+    await chatDAO.addMessage('User message', userInput, false);
     setState(() {
       messages.add(Message(isReponse: false, text: userInput));
     });
 
     final result = await openAIService.sendMessage(userInput);
-    chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
+    await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
     setState(() {
       messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
     });

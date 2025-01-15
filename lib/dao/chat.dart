@@ -10,10 +10,13 @@ class ChatDAO extends AppDatabase {
     setChat(chat!);
   }
 
-  Future<void> setChat(Chat chat) async {
+  Future<void> setChat(Chat? chat) async {
     _currentChat = chat;
     _messages = [];
-    _messages = await getMessagesForChat(chat.id);
+
+    if (chat?.id != null) {
+      _messages = await getMessagesForChat(chat!.id);
+    }
   }
 
   Chat? get currentChat => _currentChat;
