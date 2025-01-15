@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:laboratorio/database/database.dart';
 
 class ChatDAO extends AppDatabase {
@@ -47,6 +48,41 @@ class ChatDAO extends AppDatabase {
     _messages = await getMessagesForChat(currentChat!.id);
 
     return _messages;
+  }
+
+  Future<void> addChat(String title) async {
+    var chat = ChatsCompanion.insert(
+      title: title,
+      userId: const Value(1),
+      createdAt: Value(DateTime.now()),
+      updatedAt: Value(DateTime.now()),
+      deletedAt: const Value(null),
+    );
+
+    var id = await createRecord(db.chats, chat);
+    var chatModel = await db.getRecordById(db.chats, id);
+    if (chatModel != null) {
+      _allChats.add(chatModel);
+      setChat(chatModel);
+    }
+  }
+
+  Future<void> addMessage(String title, String text, bool isBot) async {
+    if (currentChat == null) {
+      await addChat(title);
+    }
+
+    var message = MessagesCompanion.insert(
+      chatId: currentChat!.id,
+      messageText: text,
+      isBot: isBot
+    );
+
+    var id = await createRecord(db.messages, message);
+    var messageModel = await db.getRecordById(db.messages, id);
+    if (messageModel != null) {
+      _messages.add(messageModel);
+    }
   }
 }
 
