@@ -35,17 +35,28 @@ class _AppState extends State<App> {
   var _selectedIndex = 0;
 
   void _onItemTapped(int index) {
+    if (index == 0) {
+      chatDAO.setChat(null);
+    }
+
     setState(() {
+      refreshPages();
       _selectedIndex = index;
     });
   }
 
   void onChatTap(int index) async {
-    chatDAO.currentChat = chatDAO.allChats[index];
+    chatDAO.setChat(chatDAO.allChats[index]);
 
     setState(() {
-      pages[0] = const ChatScreen();
+      refreshPages();
       _selectedIndex = 0;
+    });
+  }
+
+  void refreshPages() {
+    setState(() {
+      pages[0] = const ChatScreen();
     });
   }
 
