@@ -220,23 +220,6 @@ class _ConfigurationState extends State<Configuration> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.power_settings_new),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: '',
-          ),
-        ],
-      ),
     );
   }
 }

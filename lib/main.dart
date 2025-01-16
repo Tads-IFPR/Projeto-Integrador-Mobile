@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:laboratorio/dao/chat.dart';
 import 'package:laboratorio/database/database.dart';
@@ -5,6 +6,7 @@ import 'package:laboratorio/screens/chat.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
 import 'package:laboratorio/screens/history.dart';
 import 'package:laboratorio/services/openAIService.dart';
+import 'package:laboratorio/screens/configuration.dart';
 
 void main() {
   runApp(const App());
@@ -20,15 +22,22 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  late List<Widget> pages;
+  List<Widget> pages = [];
+  var _selectedIndex = 0;
+
+  bool? get isSaveChats => null;
+
+  int? get photoId => null;
+
+  String? get language => null;
 
   @override
   void initState() {
     super.initState();
-    refreshPages();
+    _checkInitialScreen();
   }
 
-  var _selectedIndex = 0;
+
 
   void _onItemTapped(int index) {
     if (index == 0) {
@@ -59,6 +68,18 @@ class _AppState extends State<App> {
     });
   }
 
+  Future<void> saveUser(String name, String email) async {
+    final user = UsersCompanion(
+      name: Value(name),
+      email: Value(email),
+      isSaveChats: Value(isSaveChats!),
+      photoId: Value(photoId),
+      language: Value(language!),
+    );
+
+    await db.createRecord(db.users, user);
+  }
+
   void refreshPages() {
     setState(() {
       pages = [
@@ -67,6 +88,19 @@ class _AppState extends State<App> {
         const Text('Profile'),
       ];
     });
+  }
+
+  Future<void> _checkInitialScreen() async {
+    final users = await db.getAllRecords(db.users);
+    if (users.isEmpty) {
+      setState(() {
+        pages = [
+          const Configuration()
+        ];
+      });
+    } else {
+      refreshPages();
+    }
   }
 
   @override
