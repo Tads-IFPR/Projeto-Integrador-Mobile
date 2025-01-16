@@ -41,7 +41,7 @@ class OpenAIService {
         
         return {
           'title': title,
-          'response': message,
+          'message': message,
         };
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
