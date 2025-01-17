@@ -73,6 +73,7 @@ class _ChatState extends State<ChatScreen> {
 
       if (resultAudio == null) return;
 
+      chatDAO.addMessage('User message', resultAudio, false, file: audioFile);
       setState(() {
         messages.add(Message(isReponse: false, audio: audioFile));
       });
@@ -99,14 +100,23 @@ class _ChatState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _initializeRecorder();
+    setChatMessages();
+  }
 
+  setChatMessages() async {
     if (chatDAO.currentChat != null) {
       var tempMessages = chatDAO.chatMessages;
       List<Message> messagesFromChat = [];
 
       for (var message in tempMessages) {
+        var files = await chatDAO.getFilesForMessage(message.id);
+        if (files.isNotEmpty) {
+          final audioFile = File(files.first.path);
+          messagesFromChat.add(Message(isReponse: message.isBot, audio: audioFile));
+          continue;
+        }
+
         messagesFromChat.add(Message(isReponse: message.isBot, text: message.messageText));
-        // messagesFromChat.add(Message(isReponse: message.isBot, audio: message.audio));
       }
 
       setState(() {

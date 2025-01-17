@@ -73,7 +73,7 @@ class ChatDAO extends AppDatabase {
   Future<void> addChat(String title) async {
     var chat = ChatsCompanion.insert(
       title: title,
-      userId: const Value(1),
+      userId: const Value(null),
       createdAt: Value(DateTime.now()),
       updatedAt: Value(DateTime.now()),
       deletedAt: const Value(null),
@@ -87,7 +87,7 @@ class ChatDAO extends AppDatabase {
     }
   }
 
-  Future<void> addMessage(String title, String text, bool isBot, {File? file = null}) async {
+  Future<void> addMessage(String title, String text, bool isBot, {File? file}) async {
     if (currentChat == null) {
       await addChat(title);
     }
@@ -109,18 +109,31 @@ class ChatDAO extends AppDatabase {
     }
   }
 
-  Future<int> associateFileWithMessage(File file, int messageId) async {
-    FilesdbData finalFile = await saveFile(file);
+  Future<int?> associateFileWithMessage(File file, int messageId) async {
+    FilesdbData? finalFile = await saveFile(file);
+    if (finalFile == null) return null;
+
     return into(fileMessage).insert(FileMessageCompanion.insert(
       messageId: messageId,
       fileId: finalFile.id,
     ));
   }
 
-  Future<List<FilesdbData>> getFilesForMessage(int messageId) {
-    return (select(db.filesdb)..where((file) => file.id.isInQuery(
-      select(fileMessage)..where((fm) => fm.messageId.equals(messageId))..get()..map((fm) => fm.fileId),
-    ))).get();
+  Future<List<FilesdbData>> getFilesForMessage(int messageId) async {
+    final fileIds = await getFileIdsForMessage(messageId);
+    if (fileIds.isEmpty) {
+      return [];
+    }
+    return (select(db.filesdb)..where((file) => file.id.isIn(fileIds))).get();
+  }
+
+  Future<List<int>> getFileIdsForMessage(int messageId) async {
+    final fileIds = await (select(fileMessage)
+      ..where((fm) => fm.messageId.equals(messageId)))
+        .map((fm) => fm.fileId)
+        .get();
+
+    return fileIds;
   }
 }
 

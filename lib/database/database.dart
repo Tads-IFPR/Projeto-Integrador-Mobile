@@ -78,7 +78,7 @@ class AppDatabase extends _$AppDatabase {
     return (delete(table)..where((row) => idColumn.equals(id))).go();
   }
 
-  Future<FilesdbData> saveFile(File file, {String mimeType = 'image/jpeg', int? duration = 0}) async {
+  Future<FilesdbData?> saveFile(File file, {String mimeType = 'image/jpeg', int? duration = 0}) async {
     final finalFile = FilesdbCompanion.insert(
       mimeType: mimeType,
       size: await file.length(),
@@ -86,7 +86,9 @@ class AppDatabase extends _$AppDatabase {
       duration: Value(duration),
     );
 
-    return await database.into(filesdb).insert(finalFile);
+    var id = await createRecord(filesdb, finalFile);
+
+    return getRecordById(filesdb, id);
   }
 }
 
