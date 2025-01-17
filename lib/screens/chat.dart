@@ -73,13 +73,13 @@ class _ChatState extends State<ChatScreen> {
 
       if (resultAudio == null) return;
 
-      chatDAO.addMessage('User message', resultAudio, false, file: audioFile);
+      await chatDAO.addMessage('User message', resultAudio, false, file: audioFile);
       setState(() {
         messages.add(Message(isReponse: false, audio: audioFile));
       });
 
       final result = await openAIService.sendMessage(resultAudio);
-      chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
+      await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
       setState(() {
         messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
       });
