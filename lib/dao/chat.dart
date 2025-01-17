@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:laboratorio/database/database.dart';
 
@@ -85,7 +87,7 @@ class ChatDAO extends AppDatabase {
     }
   }
 
-  Future<void> addMessage(String title, String text, bool isBot) async {
+  Future<void> addMessage(String title, String text, bool isBot, {File? file = null}) async {
     if (currentChat == null) {
       await addChat(title);
     }
@@ -101,6 +103,24 @@ class ChatDAO extends AppDatabase {
     if (messageModel != null) {
       _messages.add(messageModel);
     }
+
+    if (file != null && messageModel != null) {
+      await associateFileWithMessage(file, messageModel.id);
+    }
+  }
+
+  Future<int> associateFileWithMessage(File file, int messageId) async {
+    FilesdbData finalFile = await saveFile(file);
+    return into(fileMessage).insert(FileMessageCompanion.insert(
+      messageId: messageId,
+      fileId: finalFile.id,
+    ));
+  }
+
+  Future<List<FilesdbData>> getFilesForMessage(int messageId) {
+    return (select(db.filesdb)..where((file) => file.id.isInQuery(
+      select(fileMessage)..where((fm) => fm.messageId.equals(messageId))..get()..map((fm) => fm.fileId),
+    ))).get();
   }
 }
 
