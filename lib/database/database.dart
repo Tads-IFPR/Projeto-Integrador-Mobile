@@ -11,7 +11,6 @@ import 'package:laboratorio/schemas/messages.dart';
 import 'package:laboratorio/schemas/files.dart';
 import 'package:laboratorio/schemas/category_chat.dart';
 import 'package:laboratorio/schemas/file_message.dart';
-import 'package:image_picker/image_picker.dart';
 part 'database.g.dart';
 
 LazyDatabase _openConnection() {
@@ -79,20 +78,15 @@ class AppDatabase extends _$AppDatabase {
     return (delete(table)..where((row) => idColumn.equals(id))).go();
   }
 
-  // Filesdb
-  Future<void> _saveImage(XFile image) async {
-    final file = FilesdbCompanion.insert(
-      mimeType: 'image/jpeg',
-      size: await image.length(),
-      path: image.path,
-      duration: const Value.absent(),
+  Future<FilesdbData> saveFile(File file, {String mimeType = 'image/jpeg', int? duration = 0}) async {
+    final finalFile = FilesdbCompanion.insert(
+      mimeType: mimeType,
+      size: await file.length(),
+      path: file.path,
+      duration: Value(duration),
     );
 
-    try {
-      await database.into(database.filesdb).insert(file);
-    } catch (e) {
-      print('Error saving image: $e');
-    }
+    return await database.into(filesdb).insert(finalFile);
   }
 }
 

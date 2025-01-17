@@ -841,7 +841,10 @@ class $ChatsTable extends Chats with TableInfo<$ChatsTable, Chat> {
   @override
   late final GeneratedColumn<int> userId = GeneratedColumn<int>(
       'user_id', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES users (id)'));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -1742,9 +1745,9 @@ class $FileMessageTable extends FileMessage
           GeneratedColumn.constraintIsAlways('REFERENCES messages (id)'));
   static const VerificationMeta _fileIdMeta = const VerificationMeta('fileId');
   @override
-  late final GeneratedColumn<String> fileId = GeneratedColumn<String>(
+  late final GeneratedColumn<int> fileId = GeneratedColumn<int>(
       'file_id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
+      type: DriftSqlType.int, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns => [id, messageId, fileId];
   @override
@@ -1786,7 +1789,7 @@ class $FileMessageTable extends FileMessage
       messageId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}message_id'])!,
       fileId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}file_id'])!,
+          .read(DriftSqlType.int, data['${effectivePrefix}file_id'])!,
     );
   }
 
@@ -1799,7 +1802,7 @@ class $FileMessageTable extends FileMessage
 class FileMessageData extends DataClass implements Insertable<FileMessageData> {
   final int id;
   final int messageId;
-  final String fileId;
+  final int fileId;
   const FileMessageData(
       {required this.id, required this.messageId, required this.fileId});
   @override
@@ -1807,7 +1810,7 @@ class FileMessageData extends DataClass implements Insertable<FileMessageData> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['message_id'] = Variable<int>(messageId);
-    map['file_id'] = Variable<String>(fileId);
+    map['file_id'] = Variable<int>(fileId);
     return map;
   }
 
@@ -1825,7 +1828,7 @@ class FileMessageData extends DataClass implements Insertable<FileMessageData> {
     return FileMessageData(
       id: serializer.fromJson<int>(json['id']),
       messageId: serializer.fromJson<int>(json['messageId']),
-      fileId: serializer.fromJson<String>(json['fileId']),
+      fileId: serializer.fromJson<int>(json['fileId']),
     );
   }
   @override
@@ -1834,11 +1837,11 @@ class FileMessageData extends DataClass implements Insertable<FileMessageData> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'messageId': serializer.toJson<int>(messageId),
-      'fileId': serializer.toJson<String>(fileId),
+      'fileId': serializer.toJson<int>(fileId),
     };
   }
 
-  FileMessageData copyWith({int? id, int? messageId, String? fileId}) =>
+  FileMessageData copyWith({int? id, int? messageId, int? fileId}) =>
       FileMessageData(
         id: id ?? this.id,
         messageId: messageId ?? this.messageId,
@@ -1876,7 +1879,7 @@ class FileMessageData extends DataClass implements Insertable<FileMessageData> {
 class FileMessageCompanion extends UpdateCompanion<FileMessageData> {
   final Value<int> id;
   final Value<int> messageId;
-  final Value<String> fileId;
+  final Value<int> fileId;
   const FileMessageCompanion({
     this.id = const Value.absent(),
     this.messageId = const Value.absent(),
@@ -1885,13 +1888,13 @@ class FileMessageCompanion extends UpdateCompanion<FileMessageData> {
   FileMessageCompanion.insert({
     this.id = const Value.absent(),
     required int messageId,
-    required String fileId,
+    required int fileId,
   })  : messageId = Value(messageId),
         fileId = Value(fileId);
   static Insertable<FileMessageData> custom({
     Expression<int>? id,
     Expression<int>? messageId,
-    Expression<String>? fileId,
+    Expression<int>? fileId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1901,7 +1904,7 @@ class FileMessageCompanion extends UpdateCompanion<FileMessageData> {
   }
 
   FileMessageCompanion copyWith(
-      {Value<int>? id, Value<int>? messageId, Value<String>? fileId}) {
+      {Value<int>? id, Value<int>? messageId, Value<int>? fileId}) {
     return FileMessageCompanion(
       id: id ?? this.id,
       messageId: messageId ?? this.messageId,
@@ -1919,7 +1922,7 @@ class FileMessageCompanion extends UpdateCompanion<FileMessageData> {
       map['message_id'] = Variable<int>(messageId.value);
     }
     if (fileId.present) {
-      map['file_id'] = Variable<String>(fileId.value);
+      map['file_id'] = Variable<int>(fileId.value);
     }
     return map;
   }
@@ -2228,6 +2231,20 @@ final class $$UsersTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
   }
+
+  static MultiTypedResultKey<$ChatsTable, List<Chat>> _chatsRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.chats,
+          aliasName: $_aliasNameGenerator(db.users.id, db.chats.userId));
+
+  $$ChatsTableProcessedTableManager get chatsRefs {
+    final manager = $$ChatsTableTableManager($_db, $_db.chats)
+        .filter((f) => f.userId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_chatsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
@@ -2271,6 +2288,27 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
                   $removeJoinBuilderFromRootComposer,
             ));
     return composer;
+  }
+
+  Expression<bool> chatsRefs(
+      Expression<bool> Function($$ChatsTableFilterComposer f) f) {
+    final $$ChatsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.chats,
+        getReferencedColumn: (t) => t.userId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ChatsTableFilterComposer(
+              $db: $db,
+              $table: $db.chats,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
   }
 }
 
@@ -2362,6 +2400,27 @@ class $$UsersTableAnnotationComposer
             ));
     return composer;
   }
+
+  Expression<T> chatsRefs<T extends Object>(
+      Expression<T> Function($$ChatsTableAnnotationComposer a) f) {
+    final $$ChatsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.chats,
+        getReferencedColumn: (t) => t.userId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ChatsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.chats,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$UsersTableTableManager extends RootTableManager<
@@ -2375,7 +2434,7 @@ class $$UsersTableTableManager extends RootTableManager<
     $$UsersTableUpdateCompanionBuilder,
     (User, $$UsersTableReferences),
     User,
-    PrefetchHooks Function({bool photoId})> {
+    PrefetchHooks Function({bool photoId, bool chatsRefs})> {
   $$UsersTableTableManager(_$AppDatabase db, $UsersTable table)
       : super(TableManagerState(
           db: db,
@@ -2422,10 +2481,10 @@ class $$UsersTableTableManager extends RootTableManager<
               .map((e) =>
                   (e.readTable(table), $$UsersTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({photoId = false}) {
+          prefetchHooksCallback: ({photoId = false, chatsRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [],
+              explicitlyWatchedTables: [if (chatsRefs) db.chats],
               addJoins: <
                   T extends TableManagerState<
                       dynamic,
@@ -2452,7 +2511,19 @@ class $$UsersTableTableManager extends RootTableManager<
                 return state;
               },
               getPrefetchedDataCallback: (items) async {
-                return [];
+                return [
+                  if (chatsRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$UsersTableReferences._chatsRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$UsersTableReferences(db, table, p0).chatsRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.userId == item.id),
+                        typedResults: items)
+                ];
               },
             );
           },
@@ -2470,7 +2541,7 @@ typedef $$UsersTableProcessedTableManager = ProcessedTableManager<
     $$UsersTableUpdateCompanionBuilder,
     (User, $$UsersTableReferences),
     User,
-    PrefetchHooks Function({bool photoId})>;
+    PrefetchHooks Function({bool photoId, bool chatsRefs})>;
 typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
   Value<int> id,
   required String name,
@@ -2693,6 +2764,19 @@ final class $$ChatsTableReferences
     extends BaseReferences<_$AppDatabase, $ChatsTable, Chat> {
   $$ChatsTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
+  static $UsersTable _userIdTable(_$AppDatabase db) =>
+      db.users.createAlias($_aliasNameGenerator(db.chats.userId, db.users.id));
+
+  $$UsersTableProcessedTableManager? get userId {
+    if ($_item.userId == null) return null;
+    final manager = $$UsersTableTableManager($_db, $_db.users)
+        .filter((f) => f.id($_item.userId!));
+    final item = $_typedResult.readTableOrNull(_userIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
   static MultiTypedResultKey<$MessagesTable, List<Message>> _messagesRefsTable(
           _$AppDatabase db) =>
       MultiTypedResultKey.fromTable(db.messages,
@@ -2736,9 +2820,6 @@ class $$ChatsTableFilterComposer extends Composer<_$AppDatabase, $ChatsTable> {
   ColumnFilters<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<int> get userId => $composableBuilder(
-      column: $table.userId, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
 
@@ -2747,6 +2828,26 @@ class $$ChatsTableFilterComposer extends Composer<_$AppDatabase, $ChatsTable> {
 
   ColumnFilters<DateTime> get deletedAt => $composableBuilder(
       column: $table.deletedAt, builder: (column) => ColumnFilters(column));
+
+  $$UsersTableFilterComposer get userId {
+    final $$UsersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.userId,
+        referencedTable: $db.users,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$UsersTableFilterComposer(
+              $db: $db,
+              $table: $db.users,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
   Expression<bool> messagesRefs(
       Expression<bool> Function($$MessagesTableFilterComposer f) f) {
@@ -2806,9 +2907,6 @@ class $$ChatsTableOrderingComposer
   ColumnOrderings<String> get title => $composableBuilder(
       column: $table.title, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<int> get userId => $composableBuilder(
-      column: $table.userId, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -2817,6 +2915,26 @@ class $$ChatsTableOrderingComposer
 
   ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
       column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
+
+  $$UsersTableOrderingComposer get userId {
+    final $$UsersTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.userId,
+        referencedTable: $db.users,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$UsersTableOrderingComposer(
+              $db: $db,
+              $table: $db.users,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$ChatsTableAnnotationComposer
@@ -2834,9 +2952,6 @@ class $$ChatsTableAnnotationComposer
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
 
-  GeneratedColumn<int> get userId =>
-      $composableBuilder(column: $table.userId, builder: (column) => column);
-
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -2845,6 +2960,26 @@ class $$ChatsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get deletedAt =>
       $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  $$UsersTableAnnotationComposer get userId {
+    final $$UsersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.userId,
+        referencedTable: $db.users,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$UsersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.users,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
   Expression<T> messagesRefs<T extends Object>(
       Expression<T> Function($$MessagesTableAnnotationComposer a) f) {
@@ -2900,7 +3035,8 @@ class $$ChatsTableTableManager extends RootTableManager<
     $$ChatsTableUpdateCompanionBuilder,
     (Chat, $$ChatsTableReferences),
     Chat,
-    PrefetchHooks Function({bool messagesRefs, bool categoryChatRefs})> {
+    PrefetchHooks Function(
+        {bool userId, bool messagesRefs, bool categoryChatRefs})> {
   $$ChatsTableTableManager(_$AppDatabase db, $ChatsTable table)
       : super(TableManagerState(
           db: db,
@@ -2948,14 +3084,40 @@ class $$ChatsTableTableManager extends RootTableManager<
                   (e.readTable(table), $$ChatsTableReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: (
-              {messagesRefs = false, categoryChatRefs = false}) {
+              {userId = false,
+              messagesRefs = false,
+              categoryChatRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (messagesRefs) db.messages,
                 if (categoryChatRefs) db.categoryChat
               ],
-              addJoins: null,
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (userId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.userId,
+                    referencedTable: $$ChatsTableReferences._userIdTable(db),
+                    referencedColumn:
+                        $$ChatsTableReferences._userIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (messagesRefs)
@@ -2999,7 +3161,8 @@ typedef $$ChatsTableProcessedTableManager = ProcessedTableManager<
     $$ChatsTableUpdateCompanionBuilder,
     (Chat, $$ChatsTableReferences),
     Chat,
-    PrefetchHooks Function({bool messagesRefs, bool categoryChatRefs})>;
+    PrefetchHooks Function(
+        {bool userId, bool messagesRefs, bool categoryChatRefs})>;
 typedef $$MessagesTableCreateCompanionBuilder = MessagesCompanion Function({
   Value<int> id,
   required int chatId,
@@ -3660,13 +3823,13 @@ typedef $$FileMessageTableCreateCompanionBuilder = FileMessageCompanion
     Function({
   Value<int> id,
   required int messageId,
-  required String fileId,
+  required int fileId,
 });
 typedef $$FileMessageTableUpdateCompanionBuilder = FileMessageCompanion
     Function({
   Value<int> id,
   Value<int> messageId,
-  Value<String> fileId,
+  Value<int> fileId,
 });
 
 final class $$FileMessageTableReferences
@@ -3699,7 +3862,7 @@ class $$FileMessageTableFilterComposer
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get fileId => $composableBuilder(
+  ColumnFilters<int> get fileId => $composableBuilder(
       column: $table.fileId, builder: (column) => ColumnFilters(column));
 
   $$MessagesTableFilterComposer get messageId {
@@ -3735,7 +3898,7 @@ class $$FileMessageTableOrderingComposer
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get fileId => $composableBuilder(
+  ColumnOrderings<int> get fileId => $composableBuilder(
       column: $table.fileId, builder: (column) => ColumnOrderings(column));
 
   $$MessagesTableOrderingComposer get messageId {
@@ -3771,7 +3934,7 @@ class $$FileMessageTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
-  GeneratedColumn<String> get fileId =>
+  GeneratedColumn<int> get fileId =>
       $composableBuilder(column: $table.fileId, builder: (column) => column);
 
   $$MessagesTableAnnotationComposer get messageId {
@@ -3820,7 +3983,7 @@ class $$FileMessageTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
             Value<int> messageId = const Value.absent(),
-            Value<String> fileId = const Value.absent(),
+            Value<int> fileId = const Value.absent(),
           }) =>
               FileMessageCompanion(
             id: id,
@@ -3830,7 +3993,7 @@ class $$FileMessageTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required int messageId,
-            required String fileId,
+            required int fileId,
           }) =>
               FileMessageCompanion.insert(
             id: id,
