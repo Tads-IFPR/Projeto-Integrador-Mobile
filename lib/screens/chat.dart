@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:laboratorio/components/chat/filePreview/filePreview.dart';
 import 'package:laboratorio/dao/chat.dart';
 import 'package:laboratorio/main.dart';
 import 'package:path_provider/path_provider.dart';
@@ -39,7 +40,7 @@ class _ChatState extends State<ChatScreen> {
       messages.add(Message(isReponse: false, text: userInput));
     });
 
-    final result = await openAIService.sendMessage(userInput);
+    final result = await openAIService.sendMessage(userInput, files: _images);
     await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
     setState(() {
       messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
@@ -57,8 +58,16 @@ class _ChatState extends State<ChatScreen> {
 
     for (final path in result.paths) {
       final file = File(path!);
-      _images.add(file);
+      setState(() {
+        _images.add(file);
+      });
     }
+  }
+
+  _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
+    });
   }
 
   Future<void> _startRecording() async {
@@ -161,14 +170,38 @@ class _ChatState extends State<ChatScreen> {
               direction: Axis.vertical,
               children: messages
             ),
-            TextBar(
-              controller: _controller,
-              onSendMessage: _sendMessage,
-              startRecording: _startRecording,
-              stopRecording: _stopRecordingAndSend,
-              pickImages: _pickImages,
-              isRecording: _isRecording,
-            )
+            Flex(
+              direction: Axis.vertical,
+              children: [
+                Container(
+                  padding: const  EdgeInsetsDirectional.only(
+                    start: 16,
+                    end: 16,
+                    top: 8,
+                    bottom: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      for (final image in _images) ...[
+                        FilePreview(
+                          file: image,
+                          onRemove: () => _removeImage(_images.indexOf(image)),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    ],
+                  ),
+                ),
+                TextBar(
+                  controller: _controller,
+                  onSendMessage: _sendMessage,
+                  startRecording: _startRecording,
+                  stopRecording: _stopRecordingAndSend,
+                  pickImages: _pickImages,
+                  isRecording: _isRecording,
+                )
+              ],
+            ),
           ],
         ),
       ),
