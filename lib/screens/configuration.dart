@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:laboratorio/screens/chat.dart';
 
 class Configuration extends StatefulWidget {
   const Configuration({super.key});
@@ -101,6 +102,10 @@ class _ConfigurationState extends State<Configuration> {
       }
 
       await _fetchUsers();
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ChatScreen()),
+      );
       // Show success message
 
     } catch (e) {
