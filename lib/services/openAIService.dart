@@ -22,7 +22,6 @@ class OpenAIService {
 
     List<dynamic> messages = [
       {'role': 'system', 'content': 'Você é um professor de programação.'},
-      {'role': 'system', 'content': 'Retorne um json no seguinte formato: {"title": \$title,"response": \$response}'},
     ];
 
     if (files.isNotEmpty) {
@@ -41,7 +40,7 @@ class OpenAIService {
         content.add({
           'type': 'image_url',
           'image_url': {
-            "url": "data:image/jpeg;base64,{$base64}"
+            "url": "data:image/jpeg;base64,$base64"
           }
         });
       }
@@ -55,7 +54,29 @@ class OpenAIService {
       'model': model,
       'messages': messages,
       'temperature': 0.7,
-      'max_tokens': 250,
+      'response_format': {
+        'type': 'json_schema',
+        'json_schema': {
+          'name': 'doubt',
+          'schema': {
+            'type': 'object',
+            'properties': {
+              'title': {
+                'type': 'string',
+              },
+              'message': {
+                'type': 'string',
+              },
+            },
+            'required': [
+              'title',
+              'message'
+            ],
+            'additionalProperties': false
+          },
+          'strict': true,
+        }
+      } 
     });
 
     // return {
@@ -67,14 +88,14 @@ class OpenAIService {
       final response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final aiResp = jsonDecode(responseData['choices'][0]['message']['content']);
-        final message = utf8.decode(aiResp?.message?.trim().codeUnits);
-        final title = utf8.decode(aiResp?.title?.trim().codeUnits);
+        final Map<String, dynamic> responseData = jsonDecode(utf8.decode(response.body.codeUnits));
+        var content = responseData['choices'][0]['message']['content'];
+
+        final aiResp = jsonDecode(content);
         
         return {
-          'title': title,
-          'message': message,
+          'title': aiResp?['title'],
+          'message': aiResp?['message'],
         };
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
