@@ -92,7 +92,7 @@ class _UserProfileState extends State<UserProfile> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-          'User Profile',
+          'Update Profile',
           style: TextStyle(
               color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold),
         ),
