@@ -5,6 +5,7 @@ import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/screens/chat.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
 import 'package:laboratorio/screens/history.dart';
+import 'package:laboratorio/screens/profile.dart';
 import 'package:laboratorio/services/openAIService.dart';
 import 'package:laboratorio/screens/configuration.dart';
 
@@ -30,6 +31,8 @@ class _AppState extends State<App> {
   int? get photoId => null;
 
   String? get language => null;
+
+  get userId => 1;
 
   @override
   void initState() {
@@ -85,7 +88,7 @@ class _AppState extends State<App> {
       pages = [
         const ChatScreen(),
         History(onChatTap: onChatTap, onDeleteChat: onDeleteChat),
-        const Text('Profile'),
+        UserProfile(userId: userId)
       ];
     });
   }

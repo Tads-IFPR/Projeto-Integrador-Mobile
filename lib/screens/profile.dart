@@ -1,119 +1,90 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' hide Column;
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:laboratorio/database/database.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:laboratorio/screens/chat.dart';
 
-class Configuration extends StatefulWidget {
-  const Configuration({super.key});
+class UserProfile extends StatefulWidget {
+  final int userId;
+
+  const UserProfile({super.key, required this.userId});
 
   @override
-  _ConfigurationState createState() => _ConfigurationState();
+  _UserProfileState createState() => _UserProfileState();
 }
 
-class _ConfigurationState extends State<Configuration> {
+class _UserProfileState extends State<UserProfile> {
+  User? _user;
+  File? _userImage;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-
   String _selectedLanguage = 'English';
   bool _saveMessages = false;
-
-  List<User> _users = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchUsers();
+    _fetchUser();
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchUsers() async {
-    final users = await db.getAllRecords(db.users);
-    setState(() {
-      _users = users;
-    });
-  }
-
-  XFile? _selectedImage;
-
-  Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+  Future<void> _fetchUser() async {
+    final user = await db.getRecordById(db.users, 1);
+    if (user != null && user.photoId != null) {
+      final file = await db.getRecordById(db.filesdb, user.photoId!);
+      if (file != null) {
+        setState(() {
+          _user = user;
+          _userImage = File(file.path);
+          _nameController.text = user.name;
+          _emailController.text = user.email;
+          _selectedLanguage = user.language;
+          _saveMessages = user.isSaveChats;
+        });
+      } else {
+        setState(() {
+          _user = user;
+          _nameController.text = user.name;
+          _emailController.text = user.email;
+          _selectedLanguage = user.language;
+          _saveMessages = user.isSaveChats;
+        });
+      }
+    } else {
       setState(() {
-        _selectedImage = image;
+        _user = user;
+        _nameController.text = user?.name ?? '';
+        _emailController.text = user?.email ?? '';
+        _selectedLanguage = user?.language ?? 'English';
+        _saveMessages = user?.isSaveChats ?? false;
       });
     }
   }
 
   Future<void> _saveUser() async {
-    if (_nameController.text.isEmpty || _emailController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name and Email are required')),
-      );
-      return;
-    }
+    if (_user == null) return;
 
-    int? imageId;
-    if (_selectedImage != null) {
-      final file = FilesdbCompanion.insert(
-        mimeType: 'image/jpeg', // Adjust as needed
-        size: await _selectedImage!.length(),
-        path: _selectedImage!.path,
-        duration: const Value.absent(),
-      );
-
-      try {
-        imageId = await db.into(db.filesdb).insert(file);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving image: $e')),
-        );
-        return;
-      }
-    }
-
-    final user = UsersCompanion.insert(
-      name: _nameController.text,
-      email: _emailController.text,
-      isSaveChats: Value(_saveMessages),
-      photoId: imageId != null ? Value(imageId) : const Value.absent(),
-      language: _selectedLanguage,
+    final updatedUser = UsersCompanion(
+      id: drift.Value(_user!.id),
+      name: drift.Value(_nameController.text),
+      email: drift.Value(_emailController.text),
+      language: drift.Value(_selectedLanguage),
+      isSaveChats: drift.Value(_saveMessages),
+      photoId: drift.Value(_user!.photoId),
     );
 
     try {
-      final userId = await db.createRecord(db.users, user);
-      if (userId != null) {
-        final user = await db.getRecordById(db.users, userId);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(
-              'User saved successfully with ID: ${user?.id} NAME: ${user?.name} EMAIL: ${user?.email}')),
-        );
-      }
-
-      await _fetchUsers();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const ChatScreen()),
+      await db.updateRecord(db.users, updatedUser);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User updated successfully')),
       );
-      // Show success message
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error saving user: $e')),
+        SnackBar(content: Text('Error updating user: $e')),
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,7 +92,7 @@ class _ConfigurationState extends State<Configuration> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text(
-          'Configurations',
+          'User Profile',
           style: TextStyle(
               color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold),
         ),
@@ -129,24 +100,19 @@ class _ConfigurationState extends State<Configuration> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: _user == null
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
             Center(
-              child: _selectedImage == null
-                  ? const Text('No image selected.')
+              child: _userImage == null
+                  ? const Text('No image available.')
                   : SizedBox(
                 width: 200, // Define the maximum width
                 height: 200, // Define the maximum height
-                child: Image.file(File(_selectedImage!.path)),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Center(
-              child: ElevatedButton(
-                onPressed: _pickImage,
-                child: const Text('Select Image'),
+                child: Image.file(_userImage!),
               ),
             ),
             const SizedBox(height: 20),
@@ -177,11 +143,10 @@ class _ConfigurationState extends State<Configuration> {
             DropdownButtonFormField<String>(
               value: _selectedLanguage,
               items: ['English', 'Portuguese']
-                  .map((language) =>
-                  DropdownMenuItem(
-                    value: language,
-                    child: Text(language),
-                  ))
+                  .map((language) => DropdownMenuItem(
+                value: language,
+                child: Text(language),
+              ))
                   .toList(),
               onChanged: (value) {
                 setState(() {
