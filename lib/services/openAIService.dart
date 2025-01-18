@@ -58,10 +58,10 @@ class OpenAIService {
       'max_tokens': 250,
     });
 
-    return {
-      'title': 'Test',
-      'message': loremIpsum,
-    };
+    // return {
+    //   'title': 'Test',
+    //   'message': loremIpsum,
+    // };
 
     try {
       final response = await http.post(url, headers: headers, body: body);
@@ -105,7 +105,7 @@ class OpenAIService {
     );
     request.fields['model'] = 'whisper-1';
 
-    return loremIpsum;
+    // return loremIpsum;
     try {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
