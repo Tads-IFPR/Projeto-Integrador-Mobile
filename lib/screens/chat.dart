@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:laboratorio/dao/chat.dart';
@@ -24,7 +25,8 @@ class _ChatState extends State<ChatScreen> {
   List<Message> messages = [];
 
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  String? _filePath;
+  String? _audioPath;
+  final List<File> _images = [];
   bool _isRecording = false;
 
   void _sendMessage() async {
@@ -44,6 +46,21 @@ class _ChatState extends State<ChatScreen> {
     });
   }
 
+  _pickImages() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png'],
+    );
+
+    if (result == null) return null;
+
+    for (final path in result.paths) {
+      final file = File(path!);
+      _images.add(file);
+    }
+  }
+
   Future<void> _startRecording() async {
     final directory = await getApplicationDocumentsDirectory();
     final fileName = 'audio-${DateTime.now().millisecondsSinceEpoch}.m4a';
@@ -55,7 +72,7 @@ class _ChatState extends State<ChatScreen> {
     );
 
     setState(() {
-      _filePath = filePath;
+      _audioPath = filePath;
       _isRecording = true;
     });
   }
@@ -67,8 +84,8 @@ class _ChatState extends State<ChatScreen> {
       _isRecording = false;
     });
 
-    if (_filePath != null) {
-      final audioFile = File(_filePath!);
+    if (_audioPath != null) {
+      final audioFile = File(_audioPath!);
       final resultAudio = await openAIService.transcribeAudio(audioFile);
 
       if (resultAudio == null) return;
@@ -149,6 +166,7 @@ class _ChatState extends State<ChatScreen> {
               onSendMessage: _sendMessage,
               startRecording: _startRecording,
               stopRecording: _stopRecordingAndSend,
+              pickImages: _pickImages,
               isRecording: _isRecording,
             )
           ],
