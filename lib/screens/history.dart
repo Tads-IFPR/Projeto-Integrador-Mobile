@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:laboratorio/components/history/chatCard.dart';
 import 'package:laboratorio/components/history/filter.dart';
+import 'package:laboratorio/dao/categories.dart';
 import 'package:laboratorio/dao/chat.dart';
 import 'package:laboratorio/database/database.dart';
 
@@ -20,19 +21,22 @@ class History extends StatefulWidget {
 
 class _HistoryState extends State<History> {
   List<Chat> chats = [];
-  List<String> filters = ['CSS', 'JS', 'HTML'];
-  List<String> selectedFilters = [];
+  List<Category> filters = [];
+  List<Category> selectedFilters = [];
 
   @override
   void initState() {
     super.initState();
-    getAllChats();
+    initComponent();
   }
 
-  getAllChats() async {
-    await chatDAO.getAllChats();
+  initComponent() async {
+    chats = await chatDAO.getAllChats();
+    List<Category> categories = await categoryDAO.getAllCategories();
+    filters = categories.toList();
+
     setState(() {
-      chats = chatDAO.allChats;
+      chats;
     });
   }
 
@@ -68,19 +72,19 @@ class _HistoryState extends State<History> {
     );
   }
 
-  filterChats() {
+  filterChats() async{
     if (selectedFilters.isEmpty) {
+      chats = await chatDAO.getAllChats();
       return;
     }
 
+    chats = await chatDAO.getAllChatsByCategories(selectedFilters);
     setState(() {
-      // chats = chatDAO.allChats.where((chat) {
-      //   return selectedFilters.contains(chat.language);
-      // }).toList();
+      chats;
     });
   }
 
-  _onChangeFilter(String filter) {
+  _onChangeFilter(Category filter) {
     setState(() {
       if (selectedFilters.contains(filter)) {
         selectedFilters.remove(filter);
@@ -88,6 +92,8 @@ class _HistoryState extends State<History> {
         selectedFilters.add(filter);
       }
     });
+
+    filterChats();
   }
 
   @override

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:laboratorio/database/database.dart';
 
 class Filter extends StatelessWidget {
-  final List<String> filters;
-  final List<String> selectedFilters;
-  final Function(String) onChangeFilter;
+  final List<Category> filters;
+  final List<Category> selectedFilters;
+  final Function(Category) onChangeFilter;
 
   const Filter({
     super.key,
@@ -26,7 +27,7 @@ class Filter extends StatelessWidget {
           return GestureDetector(
             onTap: () => onChangeFilter(filter),
             child: Chip(
-              label: Text(filter),
+              label: Text(filter.name),
               backgroundColor: selectedFilters.contains(filter) ? Colors.blue : Colors.grey.shade300,
               labelStyle: TextStyle(
                 color: selectedFilters.contains(filter) ? Colors.white : Colors.black,
