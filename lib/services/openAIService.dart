@@ -13,7 +13,7 @@ class OpenAIService {
 
   final String _baseUrl = 'https://api.openai.com/v1';
 
-  Future<Map<String, String>?> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
+  Future<Map<String, dynamic>?> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
@@ -23,6 +23,7 @@ class OpenAIService {
     List<dynamic> messages = [
       {'role': 'system', 'content': 'Você é um professor de programação.'},
       {'role': 'system', 'content': 'Não responda com caracteres específicos de markdown'},
+      {'role': 'system', 'content': 'As categorias da conversa devem ser relacionadas a tecnologia, exemplo: CSS, JS, HTML, PHP, POO, etc.'},
     ];
 
     if (files.isNotEmpty) {
@@ -77,7 +78,8 @@ class OpenAIService {
             },
             'required': [
               'title',
-              'message'
+              'message',
+              'categories'
             ],
             'additionalProperties': false
           },
@@ -89,6 +91,7 @@ class OpenAIService {
     // return {
     //   'title': 'Test',
     //   'message': loremIpsum,
+    //   'categories': ['CSS', 'HTML', 'JavaScript'],
     // };
 
     try {
@@ -103,6 +106,7 @@ class OpenAIService {
         return {
           'title': aiResp?['title'],
           'message': aiResp?['message'],
+          'categories': aiResp?['categories'],
         };
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
