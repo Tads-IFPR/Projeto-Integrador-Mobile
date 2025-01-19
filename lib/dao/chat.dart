@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:laboratorio/database/database.dart';
 
+// Yes, i know this isn't a chat DAO, because it has a CRUD of many tables
 class ChatDAO extends AppDatabase {
   Chat? _currentChat;
   List<Chat> _allChats = [];
@@ -50,6 +51,14 @@ class ChatDAO extends AppDatabase {
     return _allChats;
   }
 
+  Future<List<Chat>> getAllChatsByCategories(List<Category> cateogories) async {
+    final chatIds = await (select(db.categoryChat)..where((tbl) => tbl.categoryId.isIn(cateogories.map((e) => e.id).toList())))
+        .map((tbl) => tbl.chatId)
+        .get();
+
+    return (select(db.chats)..where((tbl) => tbl.id.isIn(chatIds))).get();
+  }
+
   List<Chat> get allChats {
     getAllChats();
     return _allChats;
@@ -87,7 +96,7 @@ class ChatDAO extends AppDatabase {
     }
   }
 
-  Future<void> addMessage(String title, String text, bool isBot, {File? file, List<String>? categories}) async {
+  Future<void> addMessage(String title, String text, bool isBot, {File? file, List<dynamic>? categories}) async {
     if (currentChat == null) {
       await addChat(title);
     }
@@ -113,11 +122,20 @@ class ChatDAO extends AppDatabase {
     }
   }
 
-  associateCategoriesWitChat(List<String> categories) async {
+  associateCategoriesWitChat(List<dynamic> categories) async {
     var categoryIds = [];
     for (var category in categories) {
-      var categoryModel = CategoriesCompanion(name: Value(category));
-      categoryIds.add(await createRecord(db.categories, categoryModel));
+      final query = select(db.categories)..where((tbl) => tbl.name.equals(category));
+
+      var categoryModel = await query.getSingleOrNull();
+
+      if (categoryModel != null) {
+        categoryIds.add(categoryModel.id);
+        continue;
+      }
+
+      var categoryInsert = CategoriesCompanion(name: Value(category));
+      categoryIds.add(await createRecord(db.categories, categoryInsert));
     }
 
     for (var categoryId in categoryIds) {
