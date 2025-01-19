@@ -48,8 +48,6 @@ class _ChatState extends State<ChatScreen> {
     setState(() {
       messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
     });
-
-    _scrollToBottom();
   }
 
   clearFiles() {
@@ -120,8 +118,6 @@ class _ChatState extends State<ChatScreen> {
       setState(() {
         messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
       });
-
-      _scrollToBottom();
     }
   }
 
@@ -161,14 +157,6 @@ class _ChatState extends State<ChatScreen> {
       setState(() {
         messages = messagesFromChat;
       });
-
-      _scrollToBottom();
-    }
-  }
-
-  void _scrollToBottom() {
-    if (_scrollController.hasClients) {
-      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     }
   }
 
