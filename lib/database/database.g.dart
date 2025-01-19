@@ -81,6 +81,8 @@ class $FilesdbTable extends Filesdb with TableInfo<$FilesdbTable, FilesdbData> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+
+  get userId => 1;
   @override
   FilesdbData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1253,6 +1255,8 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
+
+  get userId => 1;
   @override
   Message map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';

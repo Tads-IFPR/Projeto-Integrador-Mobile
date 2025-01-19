@@ -1,8 +1,11 @@
+
 import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:laboratorio/database/database.dart';
+import 'package:laboratorio/dao/profile.dart';
+import 'package:laboratorio/screens/configuration.dart';
 
 class UserProfile extends StatefulWidget {
   final int userId;
@@ -85,6 +88,25 @@ class _UserProfileState extends State<UserProfile> {
     }
   }
 
+  Future<void> _deleteUser() async {
+    if (_user == null) return;
+
+    try {
+      await deleteUserAndRelatedData(db);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User deleted successfully')),
+      );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Configuration()),
+      );// Go back to the previous screen
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting user: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -128,14 +150,6 @@ class _UserProfileState extends State<UserProfile> {
               controller: _emailController,
               decoration: const InputDecoration(
                 labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Short Description',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -187,6 +201,21 @@ class _UserProfileState extends State<UserProfile> {
                 ),
                 child: const Text(
                   'SAVE',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _deleteUser,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                  'DELETE',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
