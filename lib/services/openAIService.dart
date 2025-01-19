@@ -65,6 +65,12 @@ class OpenAIService {
               'title': {
                 'type': 'string',
               },
+              'categories': {
+                'type': 'array',
+                'items': {
+                  'type': 'string'
+                }
+              },
               'message': {
                 'type': 'string',
               },
