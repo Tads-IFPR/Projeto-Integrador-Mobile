@@ -39,7 +39,7 @@ class _ChatState extends State<ChatScreen> {
 
     final result = await openAIService.sendMessage(userInput, files: _images);
 
-    await chatDAO.addMessage(result?['title'] ?? 'User message', userInput, false);
+    await chatDAO.addMessage(result?['title'] ?? 'User message', userInput, false, categories: result?['categories'] ?? []);
     setState(() {
       messages.add(Message(isReponse: false, text: userInput));
     });
@@ -114,7 +114,7 @@ class _ChatState extends State<ChatScreen> {
       });
 
       final result = await openAIService.sendMessage(resultAudio);
-      await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
+      await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, categories: result?['categories'] ?? []);
       setState(() {
         messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
       });
