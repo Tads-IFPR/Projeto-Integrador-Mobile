@@ -55,7 +55,7 @@ class Message extends StatelessWidget {
           Row(
             children: [
               CopyButton(text: text ?? ""),
-              Reproducetext(text: text ?? "")
+              //Reproducetext(text: text ?? "")
             ],
           )
         : const SizedBox.shrink(),
