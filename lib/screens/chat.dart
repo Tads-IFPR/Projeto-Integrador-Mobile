@@ -39,12 +39,12 @@ class _ChatState extends State<ChatScreen> {
 
     final result = await openAIService.sendMessage(userInput, files: _images);
 
-    await chatDAO.addMessage(result?['title'] ?? 'User message', userInput, false, categories: result?['categories'] ?? []);
+    await chatDAO.addMessage(result?['title'] ?? 'User message', userInput, false, false, categories: result?['categories'] ?? [], files: _images);
     setState(() {
       messages.add(Message(isReponse: false, text: userInput));
     });
 
-    await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
+    await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, false);
     setState(() {
       messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
     });
@@ -108,13 +108,13 @@ class _ChatState extends State<ChatScreen> {
 
       if (resultAudio == null) return;
 
-      await chatDAO.addMessage('User message', resultAudio, false, file: audioFile);
+      await chatDAO.addMessage('User message', resultAudio, false, true, audio: audioFile);
       setState(() {
         messages.add(Message(isReponse: false, audio: audioFile));
       });
 
       final result = await openAIService.sendMessage(resultAudio);
-      await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, categories: result?['categories'] ?? []);
+      await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, false, categories: result?['categories'] ?? []);
       setState(() {
         messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
       });
@@ -145,10 +145,16 @@ class _ChatState extends State<ChatScreen> {
 
       for (var message in tempMessages) {
         var files = await chatDAO.getFilesForMessage(message.id);
-        if (files.isNotEmpty) {
+        if (files.isNotEmpty && message.isAudio) {
           final audioFile = File(files.first.path);
           messagesFromChat.add(Message(isReponse: message.isBot, audio: audioFile));
           continue;
+        } else if (files.isNotEmpty && !message.isAudio) {
+          List<File> listFiles = [];
+          for (var file in files) {
+            listFiles.add(File(file.path));
+          }
+          messagesFromChat.add(Message(isReponse: message.isBot, files: listFiles));
         }
 
         messagesFromChat.add(Message(isReponse: message.isBot, text: message.messageText));
@@ -199,6 +205,7 @@ class _ChatState extends State<ChatScreen> {
                       for (final image in _images) ...[
                         FilePreview(
                           file: image,
+                          showRemoveButton: true,
                           onRemove: () => _removeImage(_images.indexOf(image)),
                         ),
                         const SizedBox(width: 8),

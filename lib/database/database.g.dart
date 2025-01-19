@@ -1206,9 +1206,18 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("is_bot" IN (0, 1))'));
+  static const VerificationMeta _isAudioMeta =
+      const VerificationMeta('isAudio');
+  @override
+  late final GeneratedColumn<bool> isAudio = GeneratedColumn<bool>(
+      'is_audio', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_audio" IN (0, 1))'));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, chatId, messageText, createdAt, updatedAt, isBot];
+      [id, chatId, messageText, createdAt, updatedAt, isBot, isAudio];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1248,6 +1257,12 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
     } else if (isInserting) {
       context.missing(_isBotMeta);
     }
+    if (data.containsKey('is_audio')) {
+      context.handle(_isAudioMeta,
+          isAudio.isAcceptableOrUnknown(data['is_audio']!, _isAudioMeta));
+    } else if (isInserting) {
+      context.missing(_isAudioMeta);
+    }
     return context;
   }
 
@@ -1269,6 +1284,8 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       isBot: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_bot'])!,
+      isAudio: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_audio'])!,
     );
   }
 
@@ -1285,13 +1302,15 @@ class Message extends DataClass implements Insertable<Message> {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isBot;
+  final bool isAudio;
   const Message(
       {required this.id,
       required this.chatId,
       required this.messageText,
       required this.createdAt,
       required this.updatedAt,
-      required this.isBot});
+      required this.isBot,
+      required this.isAudio});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1301,6 +1320,7 @@ class Message extends DataClass implements Insertable<Message> {
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['is_bot'] = Variable<bool>(isBot);
+    map['is_audio'] = Variable<bool>(isAudio);
     return map;
   }
 
@@ -1312,6 +1332,7 @@ class Message extends DataClass implements Insertable<Message> {
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       isBot: Value(isBot),
+      isAudio: Value(isAudio),
     );
   }
 
@@ -1325,6 +1346,7 @@ class Message extends DataClass implements Insertable<Message> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isBot: serializer.fromJson<bool>(json['isBot']),
+      isAudio: serializer.fromJson<bool>(json['isAudio']),
     );
   }
   @override
@@ -1337,6 +1359,7 @@ class Message extends DataClass implements Insertable<Message> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isBot': serializer.toJson<bool>(isBot),
+      'isAudio': serializer.toJson<bool>(isAudio),
     };
   }
 
@@ -1346,7 +1369,8 @@ class Message extends DataClass implements Insertable<Message> {
           String? messageText,
           DateTime? createdAt,
           DateTime? updatedAt,
-          bool? isBot}) =>
+          bool? isBot,
+          bool? isAudio}) =>
       Message(
         id: id ?? this.id,
         chatId: chatId ?? this.chatId,
@@ -1354,6 +1378,7 @@ class Message extends DataClass implements Insertable<Message> {
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         isBot: isBot ?? this.isBot,
+        isAudio: isAudio ?? this.isAudio,
       );
   Message copyWithCompanion(MessagesCompanion data) {
     return Message(
@@ -1364,6 +1389,7 @@ class Message extends DataClass implements Insertable<Message> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isBot: data.isBot.present ? data.isBot.value : this.isBot,
+      isAudio: data.isAudio.present ? data.isAudio.value : this.isAudio,
     );
   }
 
@@ -1375,14 +1401,15 @@ class Message extends DataClass implements Insertable<Message> {
           ..write('messageText: $messageText, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('isBot: $isBot')
+          ..write('isBot: $isBot, ')
+          ..write('isAudio: $isAudio')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, chatId, messageText, createdAt, updatedAt, isBot);
+  int get hashCode => Object.hash(
+      id, chatId, messageText, createdAt, updatedAt, isBot, isAudio);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1392,7 +1419,8 @@ class Message extends DataClass implements Insertable<Message> {
           other.messageText == this.messageText &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.isBot == this.isBot);
+          other.isBot == this.isBot &&
+          other.isAudio == this.isAudio);
 }
 
 class MessagesCompanion extends UpdateCompanion<Message> {
@@ -1402,6 +1430,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<bool> isBot;
+  final Value<bool> isAudio;
   const MessagesCompanion({
     this.id = const Value.absent(),
     this.chatId = const Value.absent(),
@@ -1409,6 +1438,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isBot = const Value.absent(),
+    this.isAudio = const Value.absent(),
   });
   MessagesCompanion.insert({
     this.id = const Value.absent(),
@@ -1417,9 +1447,11 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     required bool isBot,
+    required bool isAudio,
   })  : chatId = Value(chatId),
         messageText = Value(messageText),
-        isBot = Value(isBot);
+        isBot = Value(isBot),
+        isAudio = Value(isAudio);
   static Insertable<Message> custom({
     Expression<int>? id,
     Expression<int>? chatId,
@@ -1427,6 +1459,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isBot,
+    Expression<bool>? isAudio,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1435,6 +1468,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isBot != null) 'is_bot': isBot,
+      if (isAudio != null) 'is_audio': isAudio,
     });
   }
 
@@ -1444,7 +1478,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       Value<String>? messageText,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
-      Value<bool>? isBot}) {
+      Value<bool>? isBot,
+      Value<bool>? isAudio}) {
     return MessagesCompanion(
       id: id ?? this.id,
       chatId: chatId ?? this.chatId,
@@ -1452,6 +1487,7 @@ class MessagesCompanion extends UpdateCompanion<Message> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isBot: isBot ?? this.isBot,
+      isAudio: isAudio ?? this.isAudio,
     );
   }
 
@@ -1476,6 +1512,9 @@ class MessagesCompanion extends UpdateCompanion<Message> {
     if (isBot.present) {
       map['is_bot'] = Variable<bool>(isBot.value);
     }
+    if (isAudio.present) {
+      map['is_audio'] = Variable<bool>(isAudio.value);
+    }
     return map;
   }
 
@@ -1487,7 +1526,8 @@ class MessagesCompanion extends UpdateCompanion<Message> {
           ..write('messageText: $messageText, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('isBot: $isBot')
+          ..write('isBot: $isBot, ')
+          ..write('isAudio: $isAudio')
           ..write(')'))
         .toString();
   }
@@ -3170,6 +3210,7 @@ typedef $$MessagesTableCreateCompanionBuilder = MessagesCompanion Function({
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   required bool isBot,
+  required bool isAudio,
 });
 typedef $$MessagesTableUpdateCompanionBuilder = MessagesCompanion Function({
   Value<int> id,
@@ -3178,6 +3219,7 @@ typedef $$MessagesTableUpdateCompanionBuilder = MessagesCompanion Function({
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<bool> isBot,
+  Value<bool> isAudio,
 });
 
 final class $$MessagesTableReferences
@@ -3235,6 +3277,9 @@ class $$MessagesTableFilterComposer
 
   ColumnFilters<bool> get isBot => $composableBuilder(
       column: $table.isBot, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isAudio => $composableBuilder(
+      column: $table.isAudio, builder: (column) => ColumnFilters(column));
 
   $$ChatsTableFilterComposer get chatId {
     final $$ChatsTableFilterComposer composer = $composerBuilder(
@@ -3302,6 +3347,9 @@ class $$MessagesTableOrderingComposer
   ColumnOrderings<bool> get isBot => $composableBuilder(
       column: $table.isBot, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get isAudio => $composableBuilder(
+      column: $table.isAudio, builder: (column) => ColumnOrderings(column));
+
   $$ChatsTableOrderingComposer get chatId {
     final $$ChatsTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -3346,6 +3394,9 @@ class $$MessagesTableAnnotationComposer
 
   GeneratedColumn<bool> get isBot =>
       $composableBuilder(column: $table.isBot, builder: (column) => column);
+
+  GeneratedColumn<bool> get isAudio =>
+      $composableBuilder(column: $table.isAudio, builder: (column) => column);
 
   $$ChatsTableAnnotationComposer get chatId {
     final $$ChatsTableAnnotationComposer composer = $composerBuilder(
@@ -3418,6 +3469,7 @@ class $$MessagesTableTableManager extends RootTableManager<
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<bool> isBot = const Value.absent(),
+            Value<bool> isAudio = const Value.absent(),
           }) =>
               MessagesCompanion(
             id: id,
@@ -3426,6 +3478,7 @@ class $$MessagesTableTableManager extends RootTableManager<
             createdAt: createdAt,
             updatedAt: updatedAt,
             isBot: isBot,
+            isAudio: isAudio,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -3434,6 +3487,7 @@ class $$MessagesTableTableManager extends RootTableManager<
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             required bool isBot,
+            required bool isAudio,
           }) =>
               MessagesCompanion.insert(
             id: id,
@@ -3442,6 +3496,7 @@ class $$MessagesTableTableManager extends RootTableManager<
             createdAt: createdAt,
             updatedAt: updatedAt,
             isBot: isBot,
+            isAudio: isAudio,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>

@@ -96,7 +96,7 @@ class ChatDAO extends AppDatabase {
     }
   }
 
-  Future<void> addMessage(String title, String text, bool isBot, {File? file, List<dynamic>? categories}) async {
+  Future<void> addMessage(String title, String text, bool isBot, bool isAudio, {File? audio, List<dynamic>? categories, List<File>? files}) async {
     if (currentChat == null) {
       await addChat(title);
     }
@@ -104,7 +104,8 @@ class ChatDAO extends AppDatabase {
     var message = MessagesCompanion.insert(
       chatId: currentChat!.id,
       messageText: text,
-      isBot: isBot
+      isBot: isBot,
+      isAudio: isAudio
     );
 
     var id = await createRecord(db.messages, message);
@@ -113,8 +114,14 @@ class ChatDAO extends AppDatabase {
       _messages.add(messageModel);
     }
 
-    if (file != null && messageModel != null) {
-      await associateFileWithMessage(file, messageModel.id);
+    if (audio != null && messageModel != null) {
+      await associateFileWithMessage(audio, messageModel.id);
+    }
+
+    if (messageModel != null && files != null) {
+      for (var file in files) {
+        await associateFileWithMessage(file, messageModel.id);
+      }
     }
 
     if (categories != null && messageModel != null) {

@@ -7,12 +7,14 @@ import 'package:laboratorio/styles/default.dart';
 
 class FilePreview extends StatelessWidget {
   final File file;
-  final Function() onRemove;
+  final Function()? onRemove;
+  final bool showRemoveButton;
 
   const FilePreview({
     super.key,
     required this.file,
     required this.onRemove,
+    required this.showRemoveButton,
   });
 
   @override
@@ -36,7 +38,7 @@ class FilePreview extends StatelessWidget {
           Positioned.fill(
             child: preview
           ),
-          Positioned(
+          showRemoveButton ? Positioned(
             top: -5,
             left: -5,
             child: IconButton(
@@ -48,7 +50,7 @@ class FilePreview extends StatelessWidget {
               icon: const Icon(Icons.close, color: Colors.red),
               tooltip: "Remove file",
             ),
-          ),
+          ) : const SizedBox.shrink(),
         ],
       ),
     );
