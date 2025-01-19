@@ -22,6 +22,7 @@ class OpenAIService {
 
     List<dynamic> messages = [
       {'role': 'system', 'content': 'Você é um professor de programação.'},
+      {'role': 'system', 'content': 'Não responda com caracteres específicos de markdown'},
     ];
 
     if (files.isNotEmpty) {
