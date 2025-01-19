@@ -25,6 +25,7 @@ class _ChatState extends State<ChatScreen> {
   final _controller = TextEditingController();
   List<Message> messages = [];
 
+  final ScrollController _scrollController = ScrollController();
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   String? _audioPath;
   final List<File> _images = [];
@@ -47,6 +48,8 @@ class _ChatState extends State<ChatScreen> {
     setState(() {
       messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
     });
+
+    _scrollToBottom();
   }
 
   clearFiles() {
@@ -117,6 +120,8 @@ class _ChatState extends State<ChatScreen> {
       setState(() {
         messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
       });
+
+      _scrollToBottom();
     }
   }
 
@@ -156,6 +161,14 @@ class _ChatState extends State<ChatScreen> {
       setState(() {
         messages = messagesFromChat;
       });
+
+      _scrollToBottom();
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
     }
   }
 
@@ -167,22 +180,27 @@ class _ChatState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-   return Scaffold(
+    return Scaffold(
       backgroundColor: Colors.grey[200],
-      body: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 48, bottom: 16),
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flex(
-              direction: Axis.vertical,
-              children: messages
+            // Expanded widget for the messages
+            Expanded(
+              child: ListView.builder(
+                controller: _scrollController,
+                itemCount: messages.length,
+                reverse: false,
+                itemBuilder: (context, index) {
+                  return messages[index];
+                },
+              ),
             ),
-            Flex(
-              direction: Axis.vertical,
+            // Text bar and attachments
+            Column(
               children: [
                 Container(
-                  padding: const  EdgeInsetsDirectional.only(
+                  padding: const EdgeInsetsDirectional.only(
                     start: 16,
                     end: 16,
                     top: 8,
@@ -200,14 +218,22 @@ class _ChatState extends State<ChatScreen> {
                     ],
                   ),
                 ),
-                TextBar(
-                  controller: _controller,
-                  onSendMessage: _sendMessage,
-                  startRecording: _startRecording,
-                  stopRecording: _stopRecordingAndSend,
-                  pickImages: _pickImages,
-                  isRecording: _isRecording,
-                )
+                Container(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 16,
+                    end: 16,
+                    top: 8,
+                    bottom: 8,
+                  ),
+                  child: TextBar(
+                    controller: _controller,
+                    onSendMessage: _sendMessage,
+                    startRecording: _startRecording,
+                    stopRecording: _stopRecordingAndSend,
+                    pickImages: _pickImages,
+                    isRecording: _isRecording,
+                  ),
+                ),
               ],
             ),
           ],
