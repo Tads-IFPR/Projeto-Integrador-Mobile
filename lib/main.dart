@@ -26,6 +26,7 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     refreshPages();
+    chatDAO.getAllChats();
   }
 
   var _selectedIndex = 0;
