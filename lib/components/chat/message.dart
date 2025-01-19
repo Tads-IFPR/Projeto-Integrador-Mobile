@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:laboratorio/components/chat/copy.dart';
 import 'package:laboratorio/components/chat/player.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:laboratorio/components/chat/reproduceText.dart';
 
 const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
@@ -49,12 +48,7 @@ class Message extends StatelessWidget {
           ) : (
             audio != null
               ? Player(audioFile: audio ?? File(""))
-              : Expanded(
-                child: Markdown(
-                  shrinkWrap: true,
-                  data: text ?? "",
-                )
-              )
+              : Text(text ?? "")
           ),
         ),
         isReponse ?
