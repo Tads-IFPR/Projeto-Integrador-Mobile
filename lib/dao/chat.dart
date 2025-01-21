@@ -138,10 +138,12 @@ class ChatDAO extends AppDatabase {
 
       if (categoryModel != null) {
         categoryIds.add(categoryModel.id);
+        var updatedCategory = categoryModel.copyWith(frequency: categoryModel.frequency + 1);
+        await updateRecord(db.categories, updatedCategory);
         continue;
       }
 
-      var categoryInsert = CategoriesCompanion(name: Value(category));
+      var categoryInsert = CategoriesCompanion(name: Value(category), frequency: const Value(1));
       categoryIds.add(await createRecord(db.categories, categoryInsert));
     }
 
