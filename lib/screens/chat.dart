@@ -30,10 +30,18 @@ class _ChatState extends State<ChatScreen> {
   String? _audioPath;
   final List<File> _images = [];
   bool _isRecording = false;
+  bool _isLoading = false;
+
+  toggleLoading() {
+    setState(() {
+      _isLoading = !_isLoading;
+    });
+  } 
 
   void _sendMessage() async {
     final userInput = _controller.text;
     if (userInput.isEmpty) return;
+    toggleLoading();
     _controller.clear();
     clearFiles();
 
@@ -48,6 +56,8 @@ class _ChatState extends State<ChatScreen> {
     setState(() {
       messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
     });
+
+    toggleLoading();
   }
 
   clearFiles() {
@@ -103,6 +113,7 @@ class _ChatState extends State<ChatScreen> {
     });
 
     if (_audioPath != null) {
+      toggleLoading();
       final audioFile = File(_audioPath!);
       final resultAudio = await openAIService.transcribeAudio(audioFile);
 
@@ -118,6 +129,8 @@ class _ChatState extends State<ChatScreen> {
       setState(() {
         messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
       });
+
+      toggleLoading();
     }
   }
 
@@ -181,14 +194,16 @@ class _ChatState extends State<ChatScreen> {
           children: [
             // Expanded widget for the messages
             Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: messages.length,
-                reverse: false,
-                itemBuilder: (context, index) {
-                  return messages[index];
-                },
-              ),
+              child: _isLoading ? const Center(
+                  child: CircularProgressIndicator(), // The loading indicator
+                ) : ListView.builder(
+                  controller: _scrollController,
+                  itemCount: messages.length,
+                  reverse: false,
+                  itemBuilder: (context, index) {
+                    return messages[index];
+                  },
+                ),
             ),
             // Text bar and attachments
             Column(
