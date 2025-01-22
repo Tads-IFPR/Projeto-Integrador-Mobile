@@ -19,7 +19,7 @@ final openAIService = OpenAIService('your-token-here');
 class App extends StatefulWidget {
 
   final int initialIndex;
-  const App({super.key, this.initialIndex = 0});
+  const App({super.key, this.initialIndex = 0}); // essa alteração foi devido a fato da tela de crud de usuario não estava redirecionando corretamente para a tela de chat
 
   @override
   State<App> createState() => _AppState();
