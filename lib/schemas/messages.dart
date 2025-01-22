@@ -8,4 +8,5 @@ class Messages extends Table {
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime).named('created_at')();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime).named('updated_at')();
   BoolColumn get isBot => boolean().named('is_bot')();
+  BoolColumn get isAudio => boolean().named('is_audio')();
 }

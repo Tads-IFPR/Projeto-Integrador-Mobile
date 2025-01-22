@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:laboratorio/components/chat/filePreview/filePreview.dart';
 import 'package:laboratorio/dao/chat.dart';
 import 'package:laboratorio/main.dart';
 import 'package:path_provider/path_provider.dart';
@@ -23,24 +25,60 @@ class _ChatState extends State<ChatScreen> {
   final _controller = TextEditingController();
   List<Message> messages = [];
 
+  final ScrollController _scrollController = ScrollController();
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
-  String? _filePath;
+  String? _audioPath;
+  List<File> _images = [];
   bool _isRecording = false;
+  bool _isLoading = false;
+
+  toggleLoading() {
+    setState(() {
+      _isLoading = !_isLoading;
+    });
+  } 
 
   void _sendMessage() async {
     final userInput = _controller.text;
     if (userInput.isEmpty) return;
+    toggleLoading();
     _controller.clear();
 
-    await chatDAO.addMessage('User message', userInput, false);
-    setState(() {
-      messages.add(Message(isReponse: false, text: userInput));
-    });
+    final result = await openAIService.sendMessage(userInput, files: _images);
 
-    final result = await openAIService.sendMessage(userInput);
-    await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
+    await chatDAO.addMessage(result?['title'] ?? 'User message', userInput, false, false, categories: result?['categories'] ?? [], files: _images);
+
+    messages.add(Message(isReponse: false, text: userInput, files: _images));
+
+    await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, false);
     setState(() {
       messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
+    });
+
+    _images = [];
+    toggleLoading();
+  }
+
+  _pickImages() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png'],
+    );
+
+    if (result == null) return null;
+
+    for (final path in result.paths) {
+      final file = File(path!);
+      setState(() {
+        _images.add(file);
+      });
+    }
+  }
+
+  _removeImage(int index) {
+    setState(() {
+      _images.removeAt(index);
     });
   }
 
@@ -55,7 +93,7 @@ class _ChatState extends State<ChatScreen> {
     );
 
     setState(() {
-      _filePath = filePath;
+      _audioPath = filePath;
       _isRecording = true;
     });
   }
@@ -67,21 +105,25 @@ class _ChatState extends State<ChatScreen> {
       _isRecording = false;
     });
 
-    if (_filePath != null) {
-      final audioFile = File(_filePath!);
+    if (_audioPath != null) {
+      toggleLoading();
+      final audioFile = File(_audioPath!);
       final resultAudio = await openAIService.transcribeAudio(audioFile);
 
       if (resultAudio == null) return;
 
+      await chatDAO.addMessage('User message', resultAudio, false, true, audio: audioFile);
       setState(() {
         messages.add(Message(isReponse: false, audio: audioFile));
       });
 
       final result = await openAIService.sendMessage(resultAudio);
-      chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true);
+      await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, false, categories: result?['categories'] ?? []);
       setState(() {
         messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
       });
+
+      toggleLoading();
     }
   }
 
@@ -99,14 +141,29 @@ class _ChatState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _initializeRecorder();
+    setChatMessages();
+  }
 
+  setChatMessages() async {
     if (chatDAO.currentChat != null) {
       var tempMessages = chatDAO.chatMessages;
       List<Message> messagesFromChat = [];
 
       for (var message in tempMessages) {
+        var files = await chatDAO.getFilesForMessage(message.id);
+        if (files.isNotEmpty && message.isAudio) {
+          final audioFile = File(files.first.path);
+          messagesFromChat.add(Message(isReponse: message.isBot, audio: audioFile));
+          continue;
+        } else if (files.isNotEmpty && !message.isAudio) {
+          List<File> listFiles = [];
+          for (var file in files) {
+            listFiles.add(File(file.path));
+          }
+          messagesFromChat.add(Message(isReponse: message.isBot, files: listFiles));
+        }
+
         messagesFromChat.add(Message(isReponse: message.isBot, text: message.messageText));
-        // messagesFromChat.add(Message(isReponse: message.isBot, audio: message.audio));
       }
 
       setState(() {
@@ -123,24 +180,65 @@ class _ChatState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-   return Scaffold(
+    return Scaffold(
       backgroundColor: Colors.grey[200],
-      body: Padding(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 48, bottom: 16),
+      body: SafeArea(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flex(
-              direction: Axis.vertical,
-              children: messages
+            // Expanded widget for the messages
+            Expanded(
+              child: _isLoading ? const Center(
+                  child: CircularProgressIndicator(), // The loading indicator
+                ) : ListView.builder(
+                  controller: _scrollController,
+                  itemCount: messages.length,
+                  reverse: false,
+                  itemBuilder: (context, index) {
+                    return messages[index];
+                  },
+                ),
             ),
-            TextBar(
-              controller: _controller,
-              onSendMessage: _sendMessage,
-              startRecording: _startRecording,
-              stopRecording: _stopRecordingAndSend,
-              isRecording: _isRecording,
-            )
+            // Text bar and attachments
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 16,
+                    end: 16,
+                    top: 8,
+                    bottom: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      for (final image in _images) ...[
+                        FilePreview(
+                          file: image,
+                          showRemoveButton: true,
+                          onRemove: () => _removeImage(_images.indexOf(image)),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 16,
+                    end: 16,
+                    top: 8,
+                    bottom: 8,
+                  ),
+                  child: TextBar(
+                    controller: _controller,
+                    onSendMessage: _sendMessage,
+                    startRecording: _startRecording,
+                    stopRecording: _stopRecordingAndSend,
+                    pickImages: _pickImages,
+                    isRecording: _isRecording,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

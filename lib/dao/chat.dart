@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:laboratorio/database/database.dart';
 
+// Yes, i know this isn't a chat DAO, because it has a CRUD of many tables
 class ChatDAO extends AppDatabase {
   Chat? _currentChat;
   List<Chat> _allChats = [];
@@ -48,6 +51,14 @@ class ChatDAO extends AppDatabase {
     return _allChats;
   }
 
+  Future<List<Chat>> getAllChatsByCategories(List<Category> cateogories) async {
+    final chatIds = await (select(db.categoryChat)..where((tbl) => tbl.categoryId.isIn(cateogories.map((e) => e.id).toList())))
+        .map((tbl) => tbl.chatId)
+        .get();
+
+    return (select(db.chats)..where((tbl) => tbl.id.isIn(chatIds))).get();
+  }
+
   List<Chat> get allChats {
     getAllChats();
     return _allChats;
@@ -71,7 +82,7 @@ class ChatDAO extends AppDatabase {
   Future<void> addChat(String title) async {
     var chat = ChatsCompanion.insert(
       title: title,
-      userId: const Value(1),
+      userId: const Value(null),
       createdAt: Value(DateTime.now()),
       updatedAt: Value(DateTime.now()),
       deletedAt: const Value(null),
@@ -85,7 +96,7 @@ class ChatDAO extends AppDatabase {
     }
   }
 
-  Future<void> addMessage(String title, String text, bool isBot) async {
+  Future<void> addMessage(String title, String text, bool isBot, bool isAudio, {File? audio, List<dynamic>? categories, List<File>? files}) async {
     if (currentChat == null) {
       await addChat(title);
     }
@@ -93,7 +104,8 @@ class ChatDAO extends AppDatabase {
     var message = MessagesCompanion.insert(
       chatId: currentChat!.id,
       messageText: text,
-      isBot: isBot
+      isBot: isBot,
+      isAudio: isAudio
     );
 
     var id = await createRecord(db.messages, message);
@@ -101,6 +113,75 @@ class ChatDAO extends AppDatabase {
     if (messageModel != null) {
       _messages.add(messageModel);
     }
+
+    if (audio != null && messageModel != null) {
+      await associateFileWithMessage(audio, messageModel.id);
+    }
+
+    if (messageModel != null && files != null) {
+      for (var file in files) {
+        await associateFileWithMessage(file, messageModel.id);
+      }
+    }
+
+    if (categories != null && messageModel != null) {
+      await associateCategoriesWitChat(categories);
+    }
+  }
+
+  associateCategoriesWitChat(List<dynamic> categories) async {
+    var categoryIds = [];
+    for (var category in categories) {
+      final query = select(db.categories)..where((tbl) => tbl.name.equals(category));
+
+      var categoryModel = await query.getSingleOrNull();
+
+      if (categoryModel != null) {
+        categoryIds.add(categoryModel.id);
+        var updatedCategory = categoryModel.copyWith(frequency: categoryModel.frequency + 1);
+        await updateRecord(db.categories, updatedCategory);
+        continue;
+      }
+
+      var categoryInsert = CategoriesCompanion(name: Value(category), frequency: const Value(1));
+      categoryIds.add(await createRecord(db.categories, categoryInsert));
+    }
+
+    for (var categoryId in categoryIds) {
+      await into(db.categoryChat).insert(
+        CategoryChatCompanion.insert(
+          chatId: currentChat!.id,
+          categoryId: categoryId
+        )
+      );
+    }
+  }
+
+  Future<int?> associateFileWithMessage(File file, int messageId) async {
+    FilesdbData? finalFile = await saveFile(file);
+    if (finalFile == null) return null;
+
+    return into(fileMessage).insert(FileMessageCompanion.insert(
+      messageId: messageId,
+      fileId: finalFile.id,
+    ));
+  }
+
+  Future<List<FilesdbData>> getFilesForMessage(int messageId) async {
+    final fileIds = await getFileIdsForMessage(messageId);
+    if (fileIds.isEmpty) {
+      return [];
+    }
+    return (select(db.filesdb)..where((file) => file.id.isIn(fileIds))).get();
+  }
+
+  Future<List<int>> getFileIdsForMessage(int messageId) async {
+    final fileIds = await (select(fileMessage)
+      ..where((fm) => fm.messageId.equals(messageId)))
+        .map((fm) => fm.fileId)
+        .get();
+
+    return fileIds;
   }
 }
 
