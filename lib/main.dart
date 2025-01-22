@@ -8,6 +8,7 @@ import 'package:laboratorio/screens/history.dart';
 import 'package:laboratorio/screens/profile.dart';
 import 'package:laboratorio/services/openAIService.dart';
 import 'package:laboratorio/screens/configuration.dart';
+import 'package:laboratorio/screens/metrics.dart';
 
 void main() {
   runApp(const App());
@@ -16,7 +17,9 @@ void main() {
 final openAIService = OpenAIService('your-token-here');
 
 class App extends StatefulWidget {
-  const App({super.key});
+
+  final int initialIndex;
+  const App({super.key, this.initialIndex = 0});
 
   @override
   State<App> createState() => _AppState();
@@ -86,7 +89,8 @@ class _AppState extends State<App> {
       pages = [
         const ChatScreen(),
         History(onChatTap: onChatTap, onDeleteChat: onDeleteChat),
-        UserProfile(userId: userId)
+        UserProfile(userId: userId),
+        const DatabaseOverview(),
       ];
     });
   }

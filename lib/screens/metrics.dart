@@ -37,6 +37,21 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
     };
   }
 
+  Future<Map<String, int>> getChatTitleCounts() async {
+    final query = db.customSelect(
+      'SELECT title, COUNT(*) as count FROM chats GROUP BY title',
+      readsFrom: {db.chats},
+    );
+
+    final results = await query.map((row) {
+      final title = row.read<String>('title');
+      final count = row.read<int>('count');
+      return MapEntry(title, count);
+    }).get();
+
+    return Map.fromEntries(results);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,38 +71,79 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
 
           final data = snapshot.data!;
           final users = data['Users'] as List<User>;
+          final lastUser = users.isNotEmpty ? users.last : null;
           final filesCount = data['Files']?.length ?? 0;
+          final categoriesCount = data['Categories']?.length ?? 0;
+          final chatsCount = data['Chats']?.length ?? 0;
+          final messagesCount = data['Messages']?.length ?? 0;
+          final categoryChatsCount = data['CategoryChats']?.length ?? 0;
+          final fileMessagesCount = data['FileMessages']?.length ?? 0;
 
-          return ListView(
-            children: [
-              const ListTile(
-                title: Text('Users'),
-              ),
-              ...users.map((user) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+          return FutureBuilder<Map<String, int>>(
+            future: getChatTitleCounts(),
+            builder: (context, titleSnapshot) {
+              if (titleSnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (titleSnapshot.hasError) {
+                return Center(child: Text('Error: ${titleSnapshot.error}'));
+              }
+
+              final titleCounts = titleSnapshot.data ?? {};
+
+              return ListView(
+                children: [
+                  if (lastUser != null)
+                    ListTile(
+                      title: Text('Name: ${lastUser.name}'),
+                      subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Name: ${user.name}', style: const TextStyle(fontSize: 16)),
-                          const SizedBox(height: 8),
-                          Text('Email: ${user.email}', style: const TextStyle(fontSize: 16)),
-                          const SizedBox(height: 8),
-                          Text('Description: ${user.description}', style: const TextStyle(fontSize: 16)),
+                          Text('Email: ${lastUser.email}'),
+                          Text('Description: ${lastUser.description}'),
                         ],
                       ),
                     ),
+                  ListTile(
+                    title: const Text('Files'),
+                    subtitle: Text('Total files: $filesCount'),
                   ),
-                );
-              }).toList(),
-              ListTile(
-                title: const Text('Files'),
-                subtitle: Text('Total files: $filesCount'),
-              ),
-            ],
+                  ListTile(
+                    title: const Text('Categories'),
+                    subtitle: Text('Total categories: $categoriesCount'),
+                  ),
+                  ListTile(
+                    title: const Text('Chats'),
+                    subtitle: Text('Total chats: $chatsCount'),
+                  ),
+                  ListTile(
+                    title: const Text('Messages'),
+                    subtitle: Text('Total messages: $messagesCount'),
+                  ),
+                  ListTile(
+                    title: const Text('Category Chats'),
+                    subtitle: Text('Total category chats: $categoryChatsCount'),
+                  ),
+                  ListTile(
+                    title: const Text('File Messages'),
+                    subtitle: Text('Total file messages: $fileMessagesCount'),
+                  ),
+                  const Divider(),
+                  const ListTile(
+                    title: Text('Chat Titles Count'),
+                  ),
+                  if (titleCounts.isEmpty)
+                    const ListTile(
+                      title: Text('No chat titles found'),
+                    )
+                  else
+                    for (var entry in titleCounts.entries)
+                      ListTile(
+                        title: Text(entry.key),
+                        trailing: Text(entry.value.toString()),
+                      ),
+                ],
+              );
+            },
           );
         },
       ),

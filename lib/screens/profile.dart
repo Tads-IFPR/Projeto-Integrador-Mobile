@@ -224,25 +224,6 @@ class _UserProfileState extends flutter.State<UserProfile> {
               ),
             ),
             const flutter.SizedBox(height: 10),
-            flutter.SizedBox(
-              width: double.infinity,
-              child: flutter.ElevatedButton(
-                onPressed: () {
-                  flutter.Navigator.push(
-                    context,
-                    flutter.MaterialPageRoute(builder: (context) => const DatabaseOverview()),
-                  );
-                },
-                style: flutter.ElevatedButton.styleFrom(
-                  backgroundColor: flutter.Colors.green,
-                  padding: const flutter.EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const flutter.Text(
-                  'SHOW DATA',
-                  style: flutter.TextStyle(fontSize: 16, fontWeight: flutter.FontWeight.bold),
-                ),
-              ),
-            ),
           ],
         ),
       ),

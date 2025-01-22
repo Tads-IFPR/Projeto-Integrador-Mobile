@@ -6,6 +6,8 @@ import 'package:laboratorio/database/database.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:laboratorio/main.dart';
 
+import 'chat.dart';
+
 class Configuration extends StatefulWidget {
   const Configuration({super.key});
 
@@ -101,12 +103,14 @@ class _ConfigurationState extends State<Configuration> {
         );
       }
 
+
       await _fetchUsers();
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const Configuration()),
+        MaterialPageRoute(
+          builder: (context) => App(initialIndex: 0),
+        ),
       );
-      // Show success message
 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

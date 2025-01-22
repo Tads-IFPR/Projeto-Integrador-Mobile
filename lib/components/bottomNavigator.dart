@@ -40,6 +40,10 @@ class BottomNavigatorState extends State<BottomNavigator> {
           icon: Icon(Icons.person),
           label: 'Profile',
         ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.settings),
+          label: 'Metrics',
+        ),
       ],
     );
   }
