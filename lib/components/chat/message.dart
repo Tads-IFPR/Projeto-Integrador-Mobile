@@ -28,26 +28,6 @@ class Message extends StatelessWidget {
     return Column(
       children: [
         isReponse ? const SizedBox(height: 16) : const SizedBox.shrink(),
-        files != null && files!.isNotEmpty ? Container(
-          padding: const EdgeInsetsDirectional.only(
-            start: 16,
-            end: 16,
-            top: 8,
-            bottom: 8,
-          ),
-          child: Row(
-            children: [
-              for (final image in files!) ...[
-                FilePreview(
-                  file: image,
-                  showRemoveButton: false,
-                  onRemove: null,
-                ),
-                const SizedBox(width: 8),
-              ],
-            ],
-          ),
-        ) : const SizedBox.shrink(),
         Container(
           alignment: isReponse ? Alignment.centerLeft : Alignment.centerRight,
           decoration: BoxDecoration(
@@ -74,6 +54,25 @@ class Message extends StatelessWidget {
               : Text(text ?? "")
           ),
         ),
+        files != null && files!.isNotEmpty ? Container(
+          padding: const EdgeInsetsDirectional.only(
+            start: 16,
+            end: 16,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              for (final image in files!) ...[
+                FilePreview(
+                  file: image,
+                  showRemoveButton: false,
+                  onRemove: null,
+                ),
+                const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ) : const SizedBox.shrink(),
         isReponse ?
           Row(
             children: [

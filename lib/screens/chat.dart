@@ -28,7 +28,7 @@ class _ChatState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   String? _audioPath;
-  final List<File> _images = [];
+  List<File> _images = [];
   bool _isRecording = false;
   bool _isLoading = false;
 
@@ -43,27 +43,20 @@ class _ChatState extends State<ChatScreen> {
     if (userInput.isEmpty) return;
     toggleLoading();
     _controller.clear();
-    clearFiles();
 
     final result = await openAIService.sendMessage(userInput, files: _images);
 
     await chatDAO.addMessage(result?['title'] ?? 'User message', userInput, false, false, categories: result?['categories'] ?? [], files: _images);
-    setState(() {
-      messages.add(Message(isReponse: false, text: userInput));
-    });
+
+    messages.add(Message(isReponse: false, text: userInput, files: _images));
 
     await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, false);
     setState(() {
       messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
     });
 
+    _images = [];
     toggleLoading();
-  }
-
-  clearFiles() {
-    setState(() {
-      _images.clear();
-    });
   }
 
   _pickImages() async {
