@@ -1,13 +1,14 @@
-
 import 'dart:io';
 
 import 'package:drift/drift.dart' as drift;
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' as flutter;
+import 'package:image_picker/image_picker.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/dao/profile.dart';
 import 'package:laboratorio/screens/configuration.dart';
+import 'package:laboratorio/screens/metrics.dart'; // Importe a tela DatabaseOverview
 
-class UserProfile extends StatefulWidget {
+class UserProfile extends flutter.StatefulWidget {
   final int userId;
 
   const UserProfile({super.key, required this.userId});
@@ -16,13 +17,12 @@ class UserProfile extends StatefulWidget {
   _UserProfileState createState() => _UserProfileState();
 }
 
-class _UserProfileState extends State<UserProfile> {
+class _UserProfileState extends flutter.State<UserProfile> {
   User? _user;
   File? _userImage;
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  String _selectedLanguage = 'English';
+  final flutter.TextEditingController _nameController = flutter.TextEditingController();
+  final flutter.TextEditingController _emailController = flutter.TextEditingController();
+  final flutter.TextEditingController _descriptionController = flutter.TextEditingController();
   bool _saveMessages = false;
 
   @override
@@ -31,8 +31,22 @@ class _UserProfileState extends State<UserProfile> {
     _fetchUser();
   }
 
+  Future<int?> _fetchLastUserId() async {
+    final lastUser = await (db.select(db.users)
+      ..orderBy([(u) => drift.OrderingTerm.desc(u.id)])
+      ..limit(1))
+        .getSingleOrNull();
+    return lastUser?.id;
+  }
+
   Future<void> _fetchUser() async {
-    final user = await db.getRecordById(db.users, 1);
+    final lastUserId = await _fetchLastUserId();
+    if (lastUserId == null) {
+      // Handle case where there are no users in the database
+      return;
+    }
+
+    final user = await db.getRecordById(db.users, lastUserId);
     if (user != null && user.photoId != null) {
       final file = await db.getRecordById(db.filesdb, user.photoId!);
       if (file != null) {
@@ -41,7 +55,7 @@ class _UserProfileState extends State<UserProfile> {
           _userImage = File(file.path);
           _nameController.text = user.name;
           _emailController.text = user.email;
-          _selectedLanguage = user.language;
+          _descriptionController.text = user.description;
           _saveMessages = user.isSaveChats;
         });
       } else {
@@ -49,7 +63,7 @@ class _UserProfileState extends State<UserProfile> {
           _user = user;
           _nameController.text = user.name;
           _emailController.text = user.email;
-          _selectedLanguage = user.language;
+          _descriptionController.text = user.description;
           _saveMessages = user.isSaveChats;
         });
       }
@@ -58,7 +72,7 @@ class _UserProfileState extends State<UserProfile> {
         _user = user;
         _nameController.text = user?.name ?? '';
         _emailController.text = user?.email ?? '';
-        _selectedLanguage = user?.language ?? 'English';
+        _descriptionController.text = user?.description ?? '';
         _saveMessages = user?.isSaveChats ?? false;
       });
     }
@@ -71,19 +85,19 @@ class _UserProfileState extends State<UserProfile> {
       id: drift.Value(_user!.id),
       name: drift.Value(_nameController.text),
       email: drift.Value(_emailController.text),
-      language: drift.Value(_selectedLanguage),
+      description: drift.Value(_descriptionController.text),
       isSaveChats: drift.Value(_saveMessages),
       photoId: drift.Value(_user!.photoId),
     );
 
     try {
       await db.updateRecord(db.users, updatedUser);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User updated successfully')),
+      flutter.ScaffoldMessenger.of(context).showSnackBar(
+        const flutter.SnackBar(content: flutter.Text('User updated successfully')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating user: $e')),
+      flutter.ScaffoldMessenger.of(context).showSnackBar(
+        flutter.SnackBar(content: flutter.Text('Error updating user: $e')),
       );
     }
   }
@@ -93,90 +107,79 @@ class _UserProfileState extends State<UserProfile> {
 
     try {
       await deleteUserAndRelatedData(db);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User deleted successfully')),
+      flutter.ScaffoldMessenger.of(context).showSnackBar(
+        const flutter.SnackBar(content: flutter.Text('User deleted successfully')),
       );
-      Navigator.pushReplacement(
+      flutter.Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const Configuration()),
-      );// Go back to the previous screen
+        flutter.MaterialPageRoute(builder: (context) => const Configuration()),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting user: $e')),
+      flutter.ScaffoldMessenger.of(context).showSnackBar(
+        flutter.SnackBar(content: flutter.Text('Error deleting user: $e')),
       );
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
+  flutter.Widget build(flutter.BuildContext context) {
+    return flutter.Scaffold(
+      appBar: flutter.AppBar(
+        backgroundColor: flutter.Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: const flutter.Text(
           'Update Profile',
-          style: TextStyle(
-              color: Colors.black, fontSize: 28, fontWeight: FontWeight.bold),
+          style: flutter.TextStyle(
+              color: flutter.Colors.black, fontSize: 28, fontWeight: flutter.FontWeight.bold),
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: flutter.Padding(
+        padding: const flutter.EdgeInsets.all(16.0),
         child: _user == null
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+            ? const flutter.Center(child: flutter.CircularProgressIndicator())
+            : flutter.Column(
+          crossAxisAlignment: flutter.CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
-            Center(
+            const flutter.SizedBox(height: 20),
+            flutter.Center(
               child: _userImage == null
-                  ? const Text('No image available.')
-                  : SizedBox(
+                  ? const flutter.Text('No image available.')
+                  : flutter.SizedBox(
                 width: 200, // Define the maximum width
                 height: 200, // Define the maximum height
-                child: Image.file(_userImage!),
+                child: flutter.Image.file(_userImage!),
               ),
             ),
-            const SizedBox(height: 20),
-            TextField(
+            const flutter.SizedBox(height: 20),
+            flutter.TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: const flutter.InputDecoration(
                 labelText: 'Name',
-                border: OutlineInputBorder(),
+                border: flutter.OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 10),
-            TextField(
+            const flutter.SizedBox(height: 10),
+            flutter.TextField(
               controller: _emailController,
-              decoration: const InputDecoration(
+              decoration: const flutter.InputDecoration(
                 labelText: 'Email',
-                border: OutlineInputBorder(),
+                border: flutter.OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: _selectedLanguage,
-              items: ['English', 'Portuguese']
-                  .map((language) => DropdownMenuItem(
-                value: language,
-                child: Text(language),
-              ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedLanguage = value!;
-                });
-              },
-              decoration: const InputDecoration(
-                labelText: 'Language',
-                border: OutlineInputBorder(),
+            const flutter.SizedBox(height: 10),
+            flutter.TextField(
+              controller: _descriptionController,
+              decoration: const flutter.InputDecoration(
+                labelText: 'Description',
+                border: flutter.OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            const flutter.SizedBox(height: 20),
+            flutter.Row(
+              mainAxisAlignment: flutter.MainAxisAlignment.spaceBetween,
               children: [
-                Switch(
+                flutter.Switch(
                   value: _saveMessages,
                   onChanged: (value) {
                     setState(() {
@@ -184,39 +187,59 @@ class _UserProfileState extends State<UserProfile> {
                     });
                   },
                 ),
-                const Text(
+                const flutter.Text(
                   'Save Messages',
-                  style: TextStyle(fontSize: 16),
+                  style: flutter.TextStyle(fontSize: 16),
                 ),
               ],
             ),
-            const Spacer(),
-            SizedBox(
+            const flutter.Spacer(),
+            flutter.SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: flutter.ElevatedButton(
                 onPressed: _saveUser,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                style: flutter.ElevatedButton.styleFrom(
+                  backgroundColor: flutter.Colors.blue,
+                  padding: const flutter.EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text(
+                child: const flutter.Text(
                   'SAVE',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: flutter.TextStyle(fontSize: 16, fontWeight: flutter.FontWeight.bold),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
-            SizedBox(
+            const flutter.SizedBox(height: 10),
+            flutter.SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: flutter.ElevatedButton(
                 onPressed: _deleteUser,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                style: flutter.ElevatedButton.styleFrom(
+                  backgroundColor: flutter.Colors.red,
+                  padding: const flutter.EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text(
+                child: const flutter.Text(
                   'DELETE',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: flutter.TextStyle(fontSize: 16, fontWeight: flutter.FontWeight.bold),
+                ),
+              ),
+            ),
+            const flutter.SizedBox(height: 10),
+            flutter.SizedBox(
+              width: double.infinity,
+              child: flutter.ElevatedButton(
+                onPressed: () {
+                  flutter.Navigator.push(
+                    context,
+                    flutter.MaterialPageRoute(builder: (context) => const DatabaseOverview()),
+                  );
+                },
+                style: flutter.ElevatedButton.styleFrom(
+                  backgroundColor: flutter.Colors.green,
+                  padding: const flutter.EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const flutter.Text(
+                  'SHOW DATA',
+                  style: flutter.TextStyle(fontSize: 16, fontWeight: flutter.FontWeight.bold),
                 ),
               ),
             ),

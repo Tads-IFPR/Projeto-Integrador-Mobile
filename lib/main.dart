@@ -30,7 +30,6 @@ class _AppState extends State<App> {
 
   int? get photoId => null;
 
-  String? get language => null;
 
   get userId => 1;
 
@@ -77,7 +76,6 @@ class _AppState extends State<App> {
       email: Value(email),
       isSaveChats: Value(isSaveChats!),
       photoId: Value(photoId),
-      language: Value(language!),
     );
 
     await db.createRecord(db.users, user);

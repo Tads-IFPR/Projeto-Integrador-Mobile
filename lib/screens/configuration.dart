@@ -4,7 +4,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:laboratorio/screens/chat.dart';
+import 'package:laboratorio/main.dart';
 
 class Configuration extends StatefulWidget {
   const Configuration({super.key});
@@ -86,9 +86,9 @@ class _ConfigurationState extends State<Configuration> {
     final user = UsersCompanion.insert(
       name: _nameController.text,
       email: _emailController.text,
+      description: _descriptionController.text,
       isSaveChats: Value(_saveMessages),
       photoId: imageId != null ? Value(imageId) : const Value.absent(),
-      language: _selectedLanguage,
     );
 
     try {
@@ -104,7 +104,7 @@ class _ConfigurationState extends State<Configuration> {
       await _fetchUsers();
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const ChatScreen()),
+        MaterialPageRoute(builder: (context) => const Configuration()),
       );
       // Show success message
 
@@ -114,6 +114,8 @@ class _ConfigurationState extends State<Configuration> {
       );
     }
   }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,26 +175,7 @@ class _ConfigurationState extends State<Configuration> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: _selectedLanguage,
-              items: ['English', 'Portuguese']
-                  .map((language) =>
-                  DropdownMenuItem(
-                    value: language,
-                    child: Text(language),
-                  ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedLanguage = value!;
-                });
-              },
-              decoration: const InputDecoration(
-                labelText: 'Language',
-                border: OutlineInputBorder(),
-              ),
-            ),
+
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

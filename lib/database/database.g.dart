@@ -81,8 +81,6 @@ class $FilesdbTable extends Filesdb with TableInfo<$FilesdbTable, FilesdbData> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
-
-  get userId => 1;
   @override
   FilesdbData map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -325,6 +323,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
       'email', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _descriptionMeta =
+      const VerificationMeta('description');
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+      'description', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _isSaveChatsMeta =
       const VerificationMeta('isSaveChats');
   @override
@@ -344,15 +348,9 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES filesdb (id)'));
-  static const VerificationMeta _languageMeta =
-      const VerificationMeta('language');
-  @override
-  late final GeneratedColumn<String> language = GeneratedColumn<String>(
-      'language', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, name, email, isSaveChats, photoId, language];
+      [id, name, email, description, isSaveChats, photoId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -378,6 +376,14 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     } else if (isInserting) {
       context.missing(_emailMeta);
     }
+    if (data.containsKey('description')) {
+      context.handle(
+          _descriptionMeta,
+          description.isAcceptableOrUnknown(
+              data['description']!, _descriptionMeta));
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
     if (data.containsKey('is_save_chats')) {
       context.handle(
           _isSaveChatsMeta,
@@ -387,12 +393,6 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     if (data.containsKey('photo_id')) {
       context.handle(_photoIdMeta,
           photoId.isAcceptableOrUnknown(data['photo_id']!, _photoIdMeta));
-    }
-    if (data.containsKey('language')) {
-      context.handle(_languageMeta,
-          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
-    } else if (isInserting) {
-      context.missing(_languageMeta);
     }
     return context;
   }
@@ -409,12 +409,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       email: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
+      description: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
       isSaveChats: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_save_chats'])!,
       photoId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}photo_id']),
-      language: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}language'])!,
     );
   }
 
@@ -428,27 +428,27 @@ class User extends DataClass implements Insertable<User> {
   final int id;
   final String name;
   final String email;
+  final String description;
   final bool isSaveChats;
   final int? photoId;
-  final String language;
   const User(
       {required this.id,
       required this.name,
       required this.email,
+      required this.description,
       required this.isSaveChats,
-      this.photoId,
-      required this.language});
+      this.photoId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
     map['email'] = Variable<String>(email);
+    map['description'] = Variable<String>(description);
     map['is_save_chats'] = Variable<bool>(isSaveChats);
     if (!nullToAbsent || photoId != null) {
       map['photo_id'] = Variable<int>(photoId);
     }
-    map['language'] = Variable<String>(language);
     return map;
   }
 
@@ -457,11 +457,11 @@ class User extends DataClass implements Insertable<User> {
       id: Value(id),
       name: Value(name),
       email: Value(email),
+      description: Value(description),
       isSaveChats: Value(isSaveChats),
       photoId: photoId == null && nullToAbsent
           ? const Value.absent()
           : Value(photoId),
-      language: Value(language),
     );
   }
 
@@ -472,9 +472,9 @@ class User extends DataClass implements Insertable<User> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       email: serializer.fromJson<String>(json['email']),
+      description: serializer.fromJson<String>(json['description']),
       isSaveChats: serializer.fromJson<bool>(json['isSaveChats']),
       photoId: serializer.fromJson<int?>(json['photoId']),
-      language: serializer.fromJson<String>(json['language']),
     );
   }
   @override
@@ -484,9 +484,9 @@ class User extends DataClass implements Insertable<User> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'email': serializer.toJson<String>(email),
+      'description': serializer.toJson<String>(description),
       'isSaveChats': serializer.toJson<bool>(isSaveChats),
       'photoId': serializer.toJson<int?>(photoId),
-      'language': serializer.toJson<String>(language),
     };
   }
 
@@ -494,26 +494,27 @@ class User extends DataClass implements Insertable<User> {
           {int? id,
           String? name,
           String? email,
+          String? description,
           bool? isSaveChats,
-          Value<int?> photoId = const Value.absent(),
-          String? language}) =>
+          Value<int?> photoId = const Value.absent()}) =>
       User(
         id: id ?? this.id,
         name: name ?? this.name,
         email: email ?? this.email,
+        description: description ?? this.description,
         isSaveChats: isSaveChats ?? this.isSaveChats,
         photoId: photoId.present ? photoId.value : this.photoId,
-        language: language ?? this.language,
       );
   User copyWithCompanion(UsersCompanion data) {
     return User(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       email: data.email.present ? data.email.value : this.email,
+      description:
+          data.description.present ? data.description.value : this.description,
       isSaveChats:
           data.isSaveChats.present ? data.isSaveChats.value : this.isSaveChats,
       photoId: data.photoId.present ? data.photoId.value : this.photoId,
-      language: data.language.present ? data.language.value : this.language,
     );
   }
 
@@ -523,16 +524,16 @@ class User extends DataClass implements Insertable<User> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('email: $email, ')
+          ..write('description: $description, ')
           ..write('isSaveChats: $isSaveChats, ')
-          ..write('photoId: $photoId, ')
-          ..write('language: $language')
+          ..write('photoId: $photoId')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, name, email, isSaveChats, photoId, language);
+      Object.hash(id, name, email, description, isSaveChats, photoId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -540,51 +541,51 @@ class User extends DataClass implements Insertable<User> {
           other.id == this.id &&
           other.name == this.name &&
           other.email == this.email &&
+          other.description == this.description &&
           other.isSaveChats == this.isSaveChats &&
-          other.photoId == this.photoId &&
-          other.language == this.language);
+          other.photoId == this.photoId);
 }
 
 class UsersCompanion extends UpdateCompanion<User> {
   final Value<int> id;
   final Value<String> name;
   final Value<String> email;
+  final Value<String> description;
   final Value<bool> isSaveChats;
   final Value<int?> photoId;
-  final Value<String> language;
   const UsersCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.email = const Value.absent(),
+    this.description = const Value.absent(),
     this.isSaveChats = const Value.absent(),
     this.photoId = const Value.absent(),
-    this.language = const Value.absent(),
   });
   UsersCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required String email,
+    required String description,
     this.isSaveChats = const Value.absent(),
     this.photoId = const Value.absent(),
-    required String language,
   })  : name = Value(name),
         email = Value(email),
-        language = Value(language);
+        description = Value(description);
   static Insertable<User> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<String>? email,
+    Expression<String>? description,
     Expression<bool>? isSaveChats,
     Expression<int>? photoId,
-    Expression<String>? language,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (email != null) 'email': email,
+      if (description != null) 'description': description,
       if (isSaveChats != null) 'is_save_chats': isSaveChats,
       if (photoId != null) 'photo_id': photoId,
-      if (language != null) 'language': language,
     });
   }
 
@@ -592,16 +593,16 @@ class UsersCompanion extends UpdateCompanion<User> {
       {Value<int>? id,
       Value<String>? name,
       Value<String>? email,
+      Value<String>? description,
       Value<bool>? isSaveChats,
-      Value<int?>? photoId,
-      Value<String>? language}) {
+      Value<int?>? photoId}) {
     return UsersCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      description: description ?? this.description,
       isSaveChats: isSaveChats ?? this.isSaveChats,
       photoId: photoId ?? this.photoId,
-      language: language ?? this.language,
     );
   }
 
@@ -617,14 +618,14 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (email.present) {
       map['email'] = Variable<String>(email.value);
     }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
     if (isSaveChats.present) {
       map['is_save_chats'] = Variable<bool>(isSaveChats.value);
     }
     if (photoId.present) {
       map['photo_id'] = Variable<int>(photoId.value);
-    }
-    if (language.present) {
-      map['language'] = Variable<String>(language.value);
     }
     return map;
   }
@@ -635,9 +636,9 @@ class UsersCompanion extends UpdateCompanion<User> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('email: $email, ')
+          ..write('description: $description, ')
           ..write('isSaveChats: $isSaveChats, ')
-          ..write('photoId: $photoId, ')
-          ..write('language: $language')
+          ..write('photoId: $photoId')
           ..write(')'))
         .toString();
   }
@@ -1255,8 +1256,6 @@ class $MessagesTable extends Messages with TableInfo<$MessagesTable, Message> {
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
-
-  get userId => 1;
   @override
   Message map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -2206,17 +2205,17 @@ typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
   Value<int> id,
   required String name,
   required String email,
+  required String description,
   Value<bool> isSaveChats,
   Value<int?> photoId,
-  required String language,
 });
 typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
   Value<int> id,
   Value<String> name,
   Value<String> email,
+  Value<String> description,
   Value<bool> isSaveChats,
   Value<int?> photoId,
-  Value<String> language,
 });
 
 final class $$UsersTableReferences
@@ -2268,11 +2267,11 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
   ColumnFilters<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<bool> get isSaveChats => $composableBuilder(
       column: $table.isSaveChats, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get language => $composableBuilder(
-      column: $table.language, builder: (column) => ColumnFilters(column));
 
   $$FilesdbTableFilterComposer get photoId {
     final $$FilesdbTableFilterComposer composer = $composerBuilder(
@@ -2334,11 +2333,11 @@ class $$UsersTableOrderingComposer
   ColumnOrderings<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get isSaveChats => $composableBuilder(
       column: $table.isSaveChats, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get language => $composableBuilder(
-      column: $table.language, builder: (column) => ColumnOrderings(column));
 
   $$FilesdbTableOrderingComposer get photoId {
     final $$FilesdbTableOrderingComposer composer = $composerBuilder(
@@ -2379,11 +2378,11 @@ class $$UsersTableAnnotationComposer
   GeneratedColumn<String> get email =>
       $composableBuilder(column: $table.email, builder: (column) => column);
 
+  GeneratedColumn<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => column);
+
   GeneratedColumn<bool> get isSaveChats => $composableBuilder(
       column: $table.isSaveChats, builder: (column) => column);
-
-  GeneratedColumn<String> get language =>
-      $composableBuilder(column: $table.language, builder: (column) => column);
 
   $$FilesdbTableAnnotationComposer get photoId {
     final $$FilesdbTableAnnotationComposer composer = $composerBuilder(
@@ -2453,33 +2452,33 @@ class $$UsersTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> email = const Value.absent(),
+            Value<String> description = const Value.absent(),
             Value<bool> isSaveChats = const Value.absent(),
             Value<int?> photoId = const Value.absent(),
-            Value<String> language = const Value.absent(),
           }) =>
               UsersCompanion(
             id: id,
             name: name,
             email: email,
+            description: description,
             isSaveChats: isSaveChats,
             photoId: photoId,
-            language: language,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
             required String email,
+            required String description,
             Value<bool> isSaveChats = const Value.absent(),
             Value<int?> photoId = const Value.absent(),
-            required String language,
           }) =>
               UsersCompanion.insert(
             id: id,
             name: name,
             email: email,
+            description: description,
             isSaveChats: isSaveChats,
             photoId: photoId,
-            language: language,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
