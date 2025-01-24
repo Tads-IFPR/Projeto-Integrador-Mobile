@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
 
 class DatabaseOverview extends StatefulWidget {
@@ -52,6 +53,12 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
     return Map.fromEntries(results);
   }
 
+  List<PieChartData> createPieChartData(Map<String, int> titleCounts) {
+    return titleCounts.entries
+        .map((entry) => PieChartData(entry.key, entry.value))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,16 +76,6 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
             return const Center(child: Text('No data found'));
           }
 
-          final data = snapshot.data!;
-          final users = data['Users'] as List<User>;
-          final lastUser = users.isNotEmpty ? users.last : null;
-          final filesCount = data['Files']?.length ?? 0;
-          final categoriesCount = data['Categories']?.length ?? 0;
-          final chatsCount = data['Chats']?.length ?? 0;
-          final messagesCount = data['Messages']?.length ?? 0;
-          final categoryChatsCount = data['CategoryChats']?.length ?? 0;
-          final fileMessagesCount = data['FileMessages']?.length ?? 0;
-
           return FutureBuilder<Map<String, int>>(
             future: getChatTitleCounts(),
             builder: (context, titleSnapshot) {
@@ -89,58 +86,55 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
               }
 
               final titleCounts = titleSnapshot.data ?? {};
+              final chartData = createPieChartData(titleCounts);
 
               return ListView(
                 children: [
-                  if (lastUser != null)
-                    ListTile(
-                      title: Text('Name: ${lastUser.name}'),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Email: ${lastUser.email}'),
-                          Text('Description: ${lastUser.description}'),
+                  const SizedBox(height: 16),
+                  if (chartData.isNotEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        'Chat Titles Distribution (Pie Chart)',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    SizedBox(
+                      height: 300,
+                      child: SfCircularChart(
+                        legend: Legend(
+                          isVisible: true,
+                          position: LegendPosition.bottom,
+                          overflowMode: LegendItemOverflowMode.wrap,
+                        ),
+                        series: <CircularSeries>[
+                          PieSeries<PieChartData, String>(
+                            dataSource: chartData,
+                            xValueMapper: (data, _) => data.title,
+                            yValueMapper: (data, _) => data.count,
+                            dataLabelMapper: (data, _) =>
+                            '${data.title}: ${data.count}',
+                            dataLabelSettings: const DataLabelSettings(
+                              isVisible: true,
+                              labelPosition: ChartDataLabelPosition.outside,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ListTile(
-                    title: const Text('Files'),
-                    subtitle: Text('Total files: $filesCount'),
-                  ),
-                  ListTile(
-                    title: const Text('Categories'),
-                    subtitle: Text('Total categories: $categoriesCount'),
-                  ),
-                  ListTile(
-                    title: const Text('Chats'),
-                    subtitle: Text('Total chats: $chatsCount'),
-                  ),
-                  ListTile(
-                    title: const Text('Messages'),
-                    subtitle: Text('Total messages: $messagesCount'),
-                  ),
-                  ListTile(
-                    title: const Text('Category Chats'),
-                    subtitle: Text('Total category chats: $categoryChatsCount'),
-                  ),
-                  ListTile(
-                    title: const Text('File Messages'),
-                    subtitle: Text('Total file messages: $fileMessagesCount'),
-                  ),
+                  ],
                   const Divider(),
-                  const ListTile(
-                    title: Text('Chat Titles Count'),
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      'Data Summary',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                  if (titleCounts.isEmpty)
-                    const ListTile(
-                      title: Text('No chat titles found'),
-                    )
-                  else
-                    for (var entry in titleCounts.entries)
-                      ListTile(
-                        title: Text(entry.key),
-                        trailing: Text(entry.value.toString()),
-                      ),
+                  ListTile(
+                    title: const Text('Total Chats'),
+                    subtitle: Text('Total chats: ${titleCounts.values.fold(0, (sum, value) => sum + value)}'),
+                  ),
                 ],
               );
             },
@@ -149,4 +143,11 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
       ),
     );
   }
+}
+
+class PieChartData {
+  final String title;
+  final int count;
+
+  PieChartData(this.title, this.count);
 }
