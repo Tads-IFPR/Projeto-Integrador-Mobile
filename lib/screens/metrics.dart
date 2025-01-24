@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DatabaseOverview extends StatefulWidget {
   const DatabaseOverview({super.key});
@@ -11,11 +12,15 @@ class DatabaseOverview extends StatefulWidget {
 
 class _DatabaseOverviewState extends State<DatabaseOverview> {
   late Future<Map<String, List<dynamic>>> _dataFuture;
+  late Future<int> _totalUsageTimeFuture;
+  late Future<User?> _lastUserFuture;
 
   @override
   void initState() {
     super.initState();
     _dataFuture = fetchAllData();
+    _totalUsageTimeFuture = _getTotalUsageTime();
+    _lastUserFuture = _getLastUser();
   }
 
   Future<Map<String, List<dynamic>>> fetchAllData() async {
@@ -38,23 +43,39 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
     };
   }
 
-  Future<Map<String, int>> getChatTitleCounts() async {
+  Future<int> _getTotalUsageTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('totalUsageTime') ?? 0;
+  }
+
+  Future<User?> _getLastUser() async {
+    final users = await db.getAllRecords(db.users);
+    if (users.isNotEmpty) {
+      return users.last;
+    }
+    return null;
+  }
+
+  Future<Map<String, int>> getCategoryChatCounts() async {
     final query = db.customSelect(
-      'SELECT title, COUNT(*) as count FROM chats GROUP BY title',
-      readsFrom: {db.chats},
+      'SELECT categories.name, COUNT(category_chat.id) as count '
+          'FROM categories '
+          'LEFT JOIN category_chat ON categories.id = category_chat.category_id '
+          'GROUP BY categories.name',
+      readsFrom: {db.categories, db.categoryChat},
     );
 
     final results = await query.map((row) {
-      final title = row.read<String>('title');
+      final name = row.read<String>('name');
       final count = row.read<int>('count');
-      return MapEntry(title, count);
+      return MapEntry(name, count);
     }).get();
 
     return Map.fromEntries(results);
   }
 
-  List<PieChartData> createPieChartData(Map<String, int> titleCounts) {
-    return titleCounts.entries
+  List<PieChartData> createPieChartData(Map<String, int> categoryCounts) {
+    return categoryCounts.entries
         .map((entry) => PieChartData(entry.key, entry.value))
         .toList();
   }
@@ -63,7 +84,7 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Database Overview'),
+        title: const Text('Infos about this app'),
       ),
       body: FutureBuilder<Map<String, List<dynamic>>>(
         future: _dataFuture,
@@ -77,25 +98,55 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
           }
 
           return FutureBuilder<Map<String, int>>(
-            future: getChatTitleCounts(),
-            builder: (context, titleSnapshot) {
-              if (titleSnapshot.connectionState == ConnectionState.waiting) {
+            future: getCategoryChatCounts(),
+            builder: (context, categorySnapshot) {
+              if (categorySnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
-              } else if (titleSnapshot.hasError) {
-                return Center(child: Text('Error: ${titleSnapshot.error}'));
+              } else if (categorySnapshot.hasError) {
+                return Center(child: Text('Error: ${categorySnapshot.error}'));
               }
 
-              final titleCounts = titleSnapshot.data ?? {};
-              final chartData = createPieChartData(titleCounts);
+              final categoryCounts = categorySnapshot.data ?? {};
+              final chartData = createPieChartData(categoryCounts);
 
               return ListView(
                 children: [
+                  FutureBuilder<User?>(
+                    future: _lastUserFuture,
+                    builder: (context, userSnapshot) {
+                      if (userSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (userSnapshot.hasError) {
+                        return Center(child: Text('Error: ${userSnapshot.error}'));
+                      }
+
+                      final user = userSnapshot.data;
+                      if (user != null) {
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Name: ${user.name}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                              Text('Email: ${user.email}', style: TextStyle(fontSize: 16)),
+                              Text('Description: ${user.description}', style: TextStyle(fontSize: 16)),
+                            ],
+                          ),
+                        );
+                      } else {
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text('No user found', style: TextStyle(fontSize: 16)),
+                        );
+                      }
+                    },
+                  ),
                   const SizedBox(height: 16),
                   if (chartData.isNotEmpty) ...[
                     const Padding(
                       padding: EdgeInsets.all(16.0),
                       child: Text(
-                        'Chat Titles Distribution (Pie Chart)',
+                        'Category Chat Distribution',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -124,16 +175,25 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
                     ),
                   ],
                   const Divider(),
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      'Data Summary',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  ListTile(
-                    title: const Text('Total Chats'),
-                    subtitle: Text('Total chats: ${titleCounts.values.fold(0, (sum, value) => sum + value)}'),
+                  FutureBuilder<int>(
+                    future: _totalUsageTimeFuture,
+                    builder: (context, usageSnapshot) {
+                      if (usageSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      } else if (usageSnapshot.hasError) {
+                        return Center(child: Text('Error: ${usageSnapshot.error}'));
+                      }
+
+                      final totalUsageTime = usageSnapshot.data ?? 0;
+                      final hours = totalUsageTime ~/ 3600;
+                      final minutes = (totalUsageTime % 3600) ~/ 60;
+                      final seconds = totalUsageTime % 60;
+
+                      return ListTile(
+                        title: const Text('Total Usage Time'),
+                        subtitle: Text('$hours hours, $minutes minutes, $seconds seconds'),
+                      );
+                    },
                   ),
                 ],
               );
