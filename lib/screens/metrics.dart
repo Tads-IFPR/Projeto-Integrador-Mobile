@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class DatabaseOverview extends StatefulWidget {
   const DatabaseOverview({super.key});
@@ -10,18 +10,28 @@ class DatabaseOverview extends StatefulWidget {
   _DatabaseOverviewState createState() => _DatabaseOverviewState();
 }
 
-class _DatabaseOverviewState extends State<DatabaseOverview> {
+class _DatabaseOverviewState extends State<DatabaseOverview> with WidgetsBindingObserver {
   late Future<Map<String, List<dynamic>>> _dataFuture;
-  late Future<int> _totalUsageTimeFuture;
   late Future<User?> _lastUserFuture;
+
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _dataFuture = fetchAllData();
-    _totalUsageTimeFuture = _getTotalUsageTime();
     _lastUserFuture = _getLastUser();
   }
+
+
+
+  @override
+  void dispose() {
+
+    super.dispose();
+  }
+
+
 
   Future<Map<String, List<dynamic>>> fetchAllData() async {
     final users = await db.getAllRecords(db.users);
@@ -41,11 +51,6 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
       'CategoryChats': categoryChats,
       'FileMessages': fileMessages,
     };
-  }
-
-  Future<int> _getTotalUsageTime() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('totalUsageTime') ?? 0;
   }
 
   Future<User?> _getLastUser() async {
@@ -74,8 +79,28 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
     return Map.fromEntries(results);
   }
 
-  List<PieChartData> createPieChartData(Map<String, int> categoryCounts) {
-    return categoryCounts.entries
+  Future<Map<String, int>> getMessageCountsByCategory() async {
+    final query = db.customSelect(
+      'SELECT categories.name, COUNT(messages.id) as count '
+          'FROM categories '
+          'LEFT JOIN category_chat ON categories.id = category_chat.category_id '
+          'LEFT JOIN chats ON category_chat.chat_id = chats.id '
+          'LEFT JOIN messages ON chats.id = messages.chat_id '
+          'GROUP BY categories.name',
+      readsFrom: {db.categories, db.categoryChat, db.chats, db.messages},
+    );
+
+    final results = await query.map((row) {
+      final name = row.read<String>('name');
+      final count = row.read<int>('count');
+      return MapEntry(name, count);
+    }).get();
+
+    return Map.fromEntries(results);
+  }
+
+  List<PieChartData> createPieChartData(Map<String, int> counts) {
+    return counts.entries
         .map((entry) => PieChartData(entry.key, entry.value))
         .toList();
   }
@@ -107,95 +132,121 @@ class _DatabaseOverviewState extends State<DatabaseOverview> {
               }
 
               final categoryCounts = categorySnapshot.data ?? {};
-              final chartData = createPieChartData(categoryCounts);
+              final categoryChartData = createPieChartData(categoryCounts);
 
-              return ListView(
-                children: [
-                  FutureBuilder<User?>(
-                    future: _lastUserFuture,
-                    builder: (context, userSnapshot) {
-                      if (userSnapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (userSnapshot.hasError) {
-                        return Center(child: Text('Error: ${userSnapshot.error}'));
-                      }
+              return FutureBuilder<Map<String, int>>(
+                future: getMessageCountsByCategory(),
+                builder: (context, messageSnapshot) {
+                  if (messageSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (messageSnapshot.hasError) {
+                    return Center(child: Text('Error: ${messageSnapshot.error}'));
+                  }
 
-                      final user = userSnapshot.data;
-                      if (user != null) {
-                        return Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Name: ${user.name}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                              Text('Email: ${user.email}', style: TextStyle(fontSize: 16)),
-                              Text('Description: ${user.description}', style: TextStyle(fontSize: 16)),
+                  final messageCounts = messageSnapshot.data ?? {};
+                  final messageChartData = createPieChartData(messageCounts);
+
+                  return ListView(
+                    children: [
+                      FutureBuilder<User?>(
+                        future: _lastUserFuture,
+                        builder: (context, userSnapshot) {
+                          if (userSnapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          } else if (userSnapshot.hasError) {
+                            return Center(child: Text('Error: ${userSnapshot.error}'));
+                          }
+
+                          final user = userSnapshot.data;
+                          if (user != null) {
+                            return Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Name: ${user.name}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                  Text('Email: ${user.email}', style: TextStyle(fontSize: 16)),
+                                  Text('Description: ${user.description}', style: TextStyle(fontSize: 16)),
+                                ],
+                              ),
+                            );
+                          } else {
+                            return const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text('No user found', style: TextStyle(fontSize: 16)),
+                            );
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      if (categoryChartData.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'Category Chat Distribution',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 300,
+                          child: SfCircularChart(
+                            legend: Legend(
+                              isVisible: true,
+                              position: LegendPosition.bottom,
+                              overflowMode: LegendItemOverflowMode.wrap,
+                            ),
+                            series: <CircularSeries>[
+                              PieSeries<PieChartData, String>(
+                                dataSource: categoryChartData,
+                                xValueMapper: (data, _) => data.title,
+                                yValueMapper: (data, _) => data.count,
+                                dataLabelMapper: (data, _) =>
+                                '${data.title}: ${data.count}',
+                                dataLabelSettings: const DataLabelSettings(
+                                  isVisible: true,
+                                  labelPosition: ChartDataLabelPosition.outside,
+                                ),
+                              ),
                             ],
                           ),
-                        );
-                      } else {
-                        return const Padding(
-                          padding: EdgeInsets.all(16.0),
-                          child: Text('No user found', style: TextStyle(fontSize: 16)),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  if (chartData.isNotEmpty) ...[
-                    const Padding(
-                      padding: EdgeInsets.all(16.0),
-                      child: Text(
-                        'Category Chat Distribution',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 300,
-                      child: SfCircularChart(
-                        legend: Legend(
-                          isVisible: true,
-                          position: LegendPosition.bottom,
-                          overflowMode: LegendItemOverflowMode.wrap,
                         ),
-                        series: <CircularSeries>[
-                          PieSeries<PieChartData, String>(
-                            dataSource: chartData,
-                            xValueMapper: (data, _) => data.title,
-                            yValueMapper: (data, _) => data.count,
-                            dataLabelMapper: (data, _) =>
-                            '${data.title}: ${data.count}',
-                            dataLabelSettings: const DataLabelSettings(
-                              isVisible: true,
-                              labelPosition: ChartDataLabelPosition.outside,
-                            ),
+                      ],
+                      const Divider(),
+                      if (messageChartData.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'Message Counts by Category',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  const Divider(),
-                  FutureBuilder<int>(
-                    future: _totalUsageTimeFuture,
-                    builder: (context, usageSnapshot) {
-                      if (usageSnapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (usageSnapshot.hasError) {
-                        return Center(child: Text('Error: ${usageSnapshot.error}'));
-                      }
-
-                      final totalUsageTime = usageSnapshot.data ?? 0;
-                      final hours = totalUsageTime ~/ 3600;
-                      final minutes = (totalUsageTime % 3600) ~/ 60;
-                      final seconds = totalUsageTime % 60;
-
-                      return ListTile(
-                        title: const Text('Total Usage Time'),
-                        subtitle: Text('$hours hours, $minutes minutes, $seconds seconds'),
-                      );
-                    },
-                  ),
-                ],
+                        ),
+                        SizedBox(
+                          height: 300,
+                          child: SfCircularChart(
+                            legend: Legend(
+                              isVisible: true,
+                              position: LegendPosition.bottom,
+                              overflowMode: LegendItemOverflowMode.wrap,
+                            ),
+                            series: <CircularSeries>[
+                              PieSeries<PieChartData, String>(
+                                dataSource: messageChartData,
+                                xValueMapper: (data, _) => data.title,
+                                yValueMapper: (data, _) => data.count,
+                                dataLabelMapper: (data, _) =>
+                                '${data.title}: ${data.count}',
+                                dataLabelSettings: const DataLabelSettings(
+                                  isVisible: true,
+                                  labelPosition: ChartDataLabelPosition.outside,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               );
             },
           );
