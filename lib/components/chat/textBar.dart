@@ -9,6 +9,7 @@ class TextBar extends StatelessWidget {
   final Function() onSendMessage;
   final Function() startRecording;
   final Function() stopRecording;
+  final Function() pickImages;
   final bool isRecording;
 
   const TextBar({
@@ -17,6 +18,7 @@ class TextBar extends StatelessWidget {
     required this.onSendMessage,
     required this.startRecording,
     required this.stopRecording,
+    required this.pickImages,
     required this.isRecording,
   });
 
@@ -48,9 +50,7 @@ class TextBar extends StatelessWidget {
         child: Row(
           children: [
             IconButton(
-              onPressed: () => {
-                print('Sending file')
-              },
+              onPressed: () => pickImages(),
               icon: const Icon(Icons.attach_file),
             ),
             Expanded(

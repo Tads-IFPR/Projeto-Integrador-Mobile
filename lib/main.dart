@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:laboratorio/dao/chat.dart';
+import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/screens/chat.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
-import 'package:laboratorio/components/chat/message.dart';
 import 'package:laboratorio/screens/history.dart';
 import 'package:laboratorio/services/openAIService.dart';
 
@@ -11,31 +10,7 @@ void main() {
   runApp(const App());
 }
 
-final openAIService = OpenAIService('key-here');
-
-//this should be refactored
-class MessageModel {
-  final String? text;
-  final bool isReponse;
-  final File? audio;
-
-  MessageModel({
-    required this.isReponse,
-    this.text,
-    this.audio,
-  });
-}
-
-class ChatModel {
-  List<MessageModel> messages = [];
-  ChatModel({
-    required this.messages,
-  });
-}
-
-ChatModel? currentChat;
-
-List<ChatModel> chats = [];
+final openAIService = OpenAIService('your-token-here');
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -50,25 +25,48 @@ class _AppState extends State<App> {
   @override
   void initState() {
     super.initState();
-    pages = [
-      Chat(chat: currentChat),
-      History(onChatTap: onChatTap),
-      const Text('Profile'),
-    ];
+    refreshPages();
+    chatDAO.getAllChats();
   }
 
   var _selectedIndex = 0;
 
   void _onItemTapped(int index) {
+    if (index == 0) {
+      chatDAO.setChat(null);
+    }
+
     setState(() {
+      refreshPages();
       _selectedIndex = index;
     });
   }
 
-  void onChatTap(int index) {
+  void onChatTap(int index) async {
+    chatDAO.setChat(chatDAO.allChats[index]);
+
     setState(() {
-      pages[0] = Chat(chat: chats[index]);
+      refreshPages();
       _selectedIndex = 0;
+    });
+  }
+
+  void onDeleteChat(int index) async {
+    chatDAO.deleteChat(chatDAO.allChats[index].id);
+
+    setState(() {
+      refreshPages();
+      _selectedIndex = 0;
+    });
+  }
+
+  void refreshPages() {
+    setState(() {
+      pages = [
+        const ChatScreen(),
+        History(onChatTap: onChatTap, onDeleteChat: onDeleteChat),
+        const Text('Profile'),
+      ];
     });
   }
 
@@ -88,5 +86,11 @@ class _AppState extends State<App> {
         ),
       )
     );
+  }
+
+  @override
+  void dispose() {
+    db.close();
+    super.dispose();
   }
 }

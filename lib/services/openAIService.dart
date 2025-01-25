@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
@@ -12,29 +13,101 @@ class OpenAIService {
 
   final String _baseUrl = 'https://api.openai.com/v1';
 
-  Future<String?> sendMessage(String prompt, {String model = 'gpt-4o-mini'}) async {
+  Future<Map<String, dynamic>?> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $apiKey',
     };
 
+    List<dynamic> messages = [
+      {'role': 'system', 'content': 'Você é um professor de programação.'},
+      {'role': 'system', 'content': 'Não responda com caracteres específicos de markdown'},
+      {'role': 'system', 'content': 'As categorias da conversa devem ser relacionadas a tecnologia, exemplo: CSS, JS, HTML, PHP, POO, etc.'},
+    ];
+
+    if (files.isNotEmpty) {
+      List<Map<String, dynamic>> content = [
+        {
+          'type': 'text',
+          'text': prompt
+        }
+      ];
+
+      for (final file in files) {
+        if (file == null) continue;
+        Uint8List? imageBytes = file.readAsBytesSync();
+
+        final base64 = base64Encode(imageBytes.toList());
+        content.add({
+          'type': 'image_url',
+          'image_url': {
+            "url": "data:image/jpeg;base64,$base64"
+          }
+        });
+      }
+
+      messages.add({'role': 'user', 'content': content});
+    } else {
+      messages.add({'role': 'user', 'content': prompt});
+    }
+
     final body = jsonEncode({
       'model': model,
-      'messages': [
-        {'role': 'system', 'content': 'Você é um professor de programação.'},
-        {'role': 'user', 'content': prompt}
-      ],
+      'messages': messages,
       'temperature': 0.7,
-      'max_tokens': 150,
+      'response_format': {
+        'type': 'json_schema',
+        'json_schema': {
+          'name': 'doubt',
+          'schema': {
+            'type': 'object',
+            'properties': {
+              'title': {
+                'type': 'string',
+              },
+              'categories': {
+                'type': 'array',
+                'items': {
+                  'type': 'string'
+                }
+              },
+              'message': {
+                'type': 'string',
+              },
+            },
+            'required': [
+              'title',
+              'message',
+              'categories'
+            ],
+            'additionalProperties': false
+          },
+          'strict': true,
+        }
+      } 
     });
+
+    // return {
+    //   'title': 'Test',
+    //   'message': loremIpsum,
+    //   'categories': ['CSS', 'HTML', 'JavaScript'],
+    // };
 
     try {
       final response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        return utf8.decode(responseData['choices'][0]['message']['content']?.trim().codeUnits);
+        final Map<String, dynamic> responseData = jsonDecode(utf8.decode(response.body.codeUnits));
+        var content = responseData['choices'][0]['message']['content'];
+
+        final aiResp = jsonDecode(content);
+        
+        return {
+          'title': aiResp?['title'],
+          'message': aiResp?['message'],
+          'categories': aiResp?['categories'],
+        };
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
         return null;
@@ -64,6 +137,7 @@ class OpenAIService {
     );
     request.fields['model'] = 'whisper-1';
 
+    // return loremIpsum;
     try {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);

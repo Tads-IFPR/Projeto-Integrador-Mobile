@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:laboratorio/model/user.dart';
+import 'package:laboratorio/schemas/users.dart';
 
 
 enum ObjectiveType {

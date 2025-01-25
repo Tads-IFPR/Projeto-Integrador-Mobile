@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:laboratorio/components/chat/copy.dart';
+import 'package:laboratorio/components/chat/filePreview/filePreview.dart';
 import 'package:laboratorio/components/chat/player.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:laboratorio/components/chat/reproduceText.dart';
+// import 'package:laboratorio/components/chat/reproduceText.dart';
 
 const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
 const _colorDark = Color.fromRGBO(80, 81, 79, 1);
@@ -12,6 +12,7 @@ const _colorDark = Color.fromRGBO(80, 81, 79, 1);
 class Message extends StatelessWidget {
   final String? text;
   final File? audio;
+  final List<File>? files;
   final bool isReponse;
 
   const Message({
@@ -19,6 +20,7 @@ class Message extends StatelessWidget {
     required this.isReponse,
     this.text,
     this.audio,
+    this.files,
   });
 
   @override
@@ -49,19 +51,33 @@ class Message extends StatelessWidget {
           ) : (
             audio != null
               ? Player(audioFile: audio ?? File(""))
-              : Expanded(
-                child: Markdown(
-                  shrinkWrap: true,
-                  data: text ?? "",
-                )
-              )
+              : Text(text ?? "")
           ),
         ),
+        files != null && files!.isNotEmpty ? Container(
+          padding: const EdgeInsetsDirectional.only(
+            start: 16,
+            end: 16,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              for (final image in files!) ...[
+                FilePreview(
+                  file: image,
+                  showRemoveButton: false,
+                  onRemove: null,
+                ),
+                const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ) : const SizedBox.shrink(),
         isReponse ?
           Row(
             children: [
               CopyButton(text: text ?? ""),
-              Reproducetext(text: text ?? "")
+              //Reproducetext(text: text ?? "")
             ],
           )
         : const SizedBox.shrink(),
