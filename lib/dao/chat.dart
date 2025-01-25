@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:laboratorio/database/database.dart';
 
-// Yes, i know this isn't a chat DAO, because it has a CRUD of many tables
 class ChatDAO extends AppDatabase {
   Chat? _currentChat;
   List<Chat> _allChats = [];
@@ -79,6 +78,14 @@ class ChatDAO extends AppDatabase {
     return _messages;
   }
 
+  Future<User?> getLastUser() async {
+    final users = await getAllRecords(db.users);
+    if (users.isNotEmpty) {
+      return users.last;
+    }
+    return null;
+  }
+
   Future<void> addChat(String title) async {
     var chat = ChatsCompanion.insert(
       title: title,
@@ -97,15 +104,20 @@ class ChatDAO extends AppDatabase {
   }
 
   Future<void> addMessage(String title, String text, bool isBot, bool isAudio, {File? audio, List<dynamic>? categories, List<File>? files}) async {
+    final lastUser = await getLastUser();
+    if (lastUser == null || !lastUser.isSaveChats) {
+      return;
+    }
+
     if (currentChat == null) {
       await addChat(title);
     }
 
     var message = MessagesCompanion.insert(
-      chatId: currentChat!.id,
-      messageText: text,
-      isBot: isBot,
-      isAudio: isAudio
+        chatId: currentChat!.id,
+        messageText: text,
+        isBot: isBot,
+        isAudio: isAudio
     );
 
     var id = await createRecord(db.messages, message);
@@ -149,10 +161,10 @@ class ChatDAO extends AppDatabase {
 
     for (var categoryId in categoryIds) {
       await into(db.categoryChat).insert(
-        CategoryChatCompanion.insert(
-          chatId: currentChat!.id,
-          categoryId: categoryId
-        )
+          CategoryChatCompanion.insert(
+              chatId: currentChat!.id,
+              categoryId: categoryId
+          )
       );
     }
   }
