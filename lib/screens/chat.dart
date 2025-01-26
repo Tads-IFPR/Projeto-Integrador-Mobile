@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:laboratorio/components/chat/message.dart';
+import 'package:laboratorio/components/chat/suggestions/suggestion.dart';
 import 'package:laboratorio/components/chat/textBar.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -180,7 +181,7 @@ class _ChatState extends State<ChatScreen> {
             // Expanded widget for the messages
             Expanded(
               child: _isLoading
-              ? const Center(child: CircularProgressIndicator(),)
+              ? const Center(child: CircularProgressIndicator())
               : Container(
                 padding: const EdgeInsetsDirectional.only(
                   start: 16,
@@ -188,17 +189,16 @@ class _ChatState extends State<ChatScreen> {
                   top: 8,
                   bottom: 8,
                 ),
-                child: ListView.builder(
+                child: messages.length > 0 ? ListView.builder(
                   controller: _scrollController,
                   itemCount: messages.length,
                   reverse: false,
                   itemBuilder: (context, index) {
                     return messages[index];
                   },
-                )
+                ) : const Suggestion()
               ),
             ),
-            // Text bar and attachments
             Column(
               children: [
                 Container(
