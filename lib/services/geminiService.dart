@@ -22,7 +22,10 @@ class Geminiservice {
 
     if (prompt != null) {
       messages.add({'text': prompt});
+    } else {
+      messages.add({'text': 'Responda o áudio e/ou descreva as imagens.'});
     }
+
     if (files.isNotEmpty) {
 
       for (final file in files) {
@@ -33,7 +36,7 @@ class Geminiservice {
         messages.add({
           'inline_data': {
             "mime_type":"image/jpeg",
-             "data": "data:image/jpeg;base64,$base64"
+             "data": base64
           }
         });
       }
@@ -97,7 +100,7 @@ class Geminiservice {
       final response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(utf8.decode(response.body.codeUnits));
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
         var content = responseData['candidates'][0]['content']['parts'][0]['text'];
 
         final aiResp = jsonDecode(content);
