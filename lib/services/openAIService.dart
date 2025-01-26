@@ -14,6 +14,7 @@ class OpenAIService {
   final String _baseUrl = 'https://api.openai.com/v1';
 
   Future<Map<String, dynamic>> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
+    // throw Exception('Internal test');
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
@@ -119,6 +120,7 @@ class OpenAIService {
   }
 
   Future<String> transcribeAudio(File audioFile) async {
+    // throw Exception('Internal test');
     final url = Uri.parse('$_baseUrl/audio/transcriptions');
     final headers = {
       'Authorization': 'Bearer $apiKey',
@@ -155,7 +157,7 @@ class OpenAIService {
     }
   }
 
-  // not implemented
+  // TODO: not implemented
   Future<File?> textToSpeach(String input, {String model = 'tts-1', String voice = 'alloy'}) async {
     return null;
     final url = Uri.parse('$_baseUrl/audio/speech');
