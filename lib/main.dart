@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:laboratorio/controllers/chatController.dart';
 import 'package:laboratorio/dao/chat.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/screens/chat.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
 import 'package:laboratorio/screens/history.dart';
+import 'package:laboratorio/services/geminiService.dart';
 import 'package:laboratorio/services/openAIService.dart';
 
 void main() {
@@ -11,6 +13,8 @@ void main() {
 }
 
 final openAIService = OpenAIService('your-token-here');
+final geminiService = Geminiservice('your-token-here');
+final chatController = ChatController(geminiService, openAIService);
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -26,7 +30,6 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     refreshPages();
-    chatDAO.getAllChats();
   }
 
   var _selectedIndex = 0;
