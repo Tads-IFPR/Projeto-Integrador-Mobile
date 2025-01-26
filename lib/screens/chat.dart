@@ -44,15 +44,10 @@ class _ChatState extends State<ChatScreen> {
     toggleLoading();
     _controller.clear();
 
-    final result = await openAIService.sendMessage(userInput, files: _images);
-
-    await chatDAO.addMessage(result?['title'] ?? 'User message', userInput, false, false, categories: result?['categories'] ?? [], files: _images);
-
+    final response = await chatController.sendMessage(userInput, images: _images);
     messages.add(Message(isReponse: false, text: userInput, files: _images));
-
-    await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, false);
     setState(() {
-      messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
+      messages.add(Message(isReponse: true, text:response ?? 'Failed to get a response.'));
     });
 
     _images = [];
@@ -108,19 +103,16 @@ class _ChatState extends State<ChatScreen> {
     if (_audioPath != null) {
       toggleLoading();
       final audioFile = File(_audioPath!);
-      final resultAudio = await openAIService.transcribeAudio(audioFile);
+      final result = await chatController.transcribeAudio(audioFile);
 
-      if (resultAudio == null) return;
+      if (result == null) return;
 
-      await chatDAO.addMessage('User message', resultAudio, false, true, audio: audioFile);
       setState(() {
         messages.add(Message(isReponse: false, audio: audioFile));
       });
 
-      final result = await openAIService.sendMessage(resultAudio);
-      await chatDAO.addMessage(result?['title'] ?? 'Bot message', result?['message'] ?? 'Failed to get a response.', true, false, categories: result?['categories'] ?? []);
       setState(() {
-        messages.add(Message(isReponse: true, text: result?['message'] ?? 'Failed to get a response.'));
+        messages.add(Message(isReponse: true, text: result ?? 'Failed to get a response.'));
       });
 
       toggleLoading();
