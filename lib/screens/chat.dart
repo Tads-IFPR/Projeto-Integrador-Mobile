@@ -179,16 +179,24 @@ class _ChatState extends State<ChatScreen> {
           children: [
             // Expanded widget for the messages
             Expanded(
-              child: _isLoading ? const Center(
-                  child: CircularProgressIndicator(), // The loading indicator
-                ) : ListView.builder(
+              child: _isLoading
+              ? const Center(child: CircularProgressIndicator(),)
+              : Container(
+                padding: const EdgeInsetsDirectional.only(
+                  start: 16,
+                  end: 16,
+                  top: 8,
+                  bottom: 8,
+                ),
+                child: ListView.builder(
                   controller: _scrollController,
                   itemCount: messages.length,
                   reverse: false,
                   itemBuilder: (context, index) {
                     return messages[index];
                   },
-                ),
+                )
+              ),
             ),
             // Text bar and attachments
             Column(
