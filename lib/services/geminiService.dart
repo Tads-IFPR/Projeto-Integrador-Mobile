@@ -172,6 +172,10 @@ class Geminiservice {
     }
   }
 
+  Future<List<Map<String, String>>> getSuggestions(List<String> themes) async {
+    return [];
+  }
+
   // not implemented
   Future<File?> textToSpeach(String input, {String model = 'tts-1', String voice = 'alloy'}) async {
     return null;

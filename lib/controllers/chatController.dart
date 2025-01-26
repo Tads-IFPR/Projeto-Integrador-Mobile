@@ -54,6 +54,18 @@ class ChatController {
     }
   }
 
+  Future<List<Map<String, String>>> getSuggestions(List<String> themes) {
+    try {
+      return openAIService.getSuggestions(themes);
+    } catch (e) {
+      try {
+        return geminiService.getSuggestions(themes);
+      } catch (e) {
+        rethrow;
+      }
+    }
+  }
+
   Future<void> saveMessage(String title, String input, String response, {List<dynamic>? categories = const [], List<File>? images = const []}) async {
     await chatDAO.addMessage(title, input, false, false, categories: categories, files: images);
     await chatDAO.addMessage(title, response, true, false);

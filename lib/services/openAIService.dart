@@ -157,6 +157,10 @@ class OpenAIService {
     }
   }
 
+  Future<List<Map<String, String>>> getSuggestions(List<String> themes) async {
+    return [];
+  }
+
   // TODO: not implemented
   Future<File?> textToSpeach(String input, {String model = 'tts-1', String voice = 'alloy'}) async {
     return null;
