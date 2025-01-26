@@ -13,7 +13,7 @@ class OpenAIService {
 
   final String _baseUrl = 'https://api.openai.com/v1';
 
-  Future<Map<String, dynamic>?> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
+  Future<Map<String, dynamic>> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
@@ -110,15 +110,15 @@ class OpenAIService {
         };
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
-        return null;
+        throw Exception('Failed to get a response');
       }
     } catch (e) {
       print('Exception occurred: $e');
-      return null;
+      rethrow;
     }
   }
 
-  Future<String?> transcribeAudio(File audioFile) async {
+  Future<String> transcribeAudio(File audioFile) async {
     final url = Uri.parse('$_baseUrl/audio/transcriptions');
     final headers = {
       'Authorization': 'Bearer $apiKey',
@@ -147,16 +147,18 @@ class OpenAIService {
         return responseData['text']?.trim();
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
-        return null;
+        throw Exception('Failed to get a response');
       }
     } catch (e) {
       print('Exception occurred: $e');
-      return null;
+      rethrow;
     }
   }
 
+  // not implemented
   Future<File?> textToSpeach(String input, {String model = 'tts-1', String voice = 'alloy'}) async {
-   final url = Uri.parse('$_baseUrl/audio/speech');
+    return null;
+    final url = Uri.parse('$_baseUrl/audio/speech');
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $apiKey',
