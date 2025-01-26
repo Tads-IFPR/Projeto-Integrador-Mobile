@@ -1,7 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
+import 'package:laboratorio/screens/objectives.dart';
 
 class DatabaseOverview extends StatefulWidget {
   const DatabaseOverview({super.key});
@@ -14,7 +14,6 @@ class _DatabaseOverviewState extends State<DatabaseOverview> with WidgetsBinding
   late Future<Map<String, List<dynamic>>> _dataFuture;
   late Future<User?> _lastUserFuture;
 
-
   @override
   void initState() {
     super.initState();
@@ -23,15 +22,10 @@ class _DatabaseOverviewState extends State<DatabaseOverview> with WidgetsBinding
     _lastUserFuture = _getLastUser();
   }
 
-
-
   @override
   void dispose() {
-
     super.dispose();
   }
-
-
 
   Future<Map<String, List<dynamic>>> fetchAllData() async {
     final users = await db.getAllRecords(db.users);
@@ -244,6 +238,16 @@ class _DatabaseOverviewState extends State<DatabaseOverview> with WidgetsBinding
                           ),
                         ),
                       ],
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => AddObjectiveScreen()),
+                          );
+                        },
+                        child: Text('Go to Objectives'),
+                      ),
                     ],
                   );
                 },
