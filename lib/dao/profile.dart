@@ -10,7 +10,10 @@ Future<void> deleteUserAndRelatedData(AppDatabase db) async {
       print('No messages found for user $userId');
     }
 
-
+    final deletedObjectives = await db.deleteRecordById(db.objectives, userId);
+    if (deletedObjectives == 0) {
+      print('No objectives found for user $userId');
+    }
 
     // Delete the user
     final deletedUser = await db.deleteRecordById(db.users, userId);

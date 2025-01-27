@@ -103,7 +103,6 @@ class _ConfigurationState extends State<Configuration> {
         );
       }
 
-
       await _fetchUsers();
       Navigator.pushReplacement(
         context,
@@ -119,7 +118,6 @@ class _ConfigurationState extends State<Configuration> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -133,87 +131,88 @@ class _ConfigurationState extends State<Configuration> {
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            Center(
-              child: _selectedImage == null
-                  ? const Text('No image selected.')
-                  : SizedBox(
-                width: 200, // Define the maximum width
-                height: 200, // Define the maximum height
-                child: Image.file(File(_selectedImage!.path)),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Center(
-              child: ElevatedButton(
-                onPressed: _pickImage,
-                child: const Text('Select Image'),
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Short Description',
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Switch(
-                  value: _saveMessages,
-                  onChanged: (value) {
-                    setState(() {
-                      _saveMessages = value;
-                    });
-                  },
-                ),
-                const Text(
-                  'Save Messages',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saveUser,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(
-                  'SAVE',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: _selectedImage == null
+                    ? const Text('No image selected.')
+                    : SizedBox(
+                  width: 200, // Define the maximum width
+                  height: 200, // Define the maximum height
+                  child: Image.file(File(_selectedImage!.path)),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _pickImage,
+                  child: const Text('Select Image'),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Short Description',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Switch(
+                    value: _saveMessages,
+                    onChanged: (value) {
+                      setState(() {
+                        _saveMessages = value;
+                      });
+                    },
+                  ),
+                  const Text(
+                    'Save Messages',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saveUser,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text(
+                    'SAVE',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

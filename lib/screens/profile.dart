@@ -134,97 +134,99 @@ class _UserProfileState extends flutter.State<UserProfile> {
         ),
         centerTitle: true,
       ),
-      body: flutter.Padding(
-        padding: const flutter.EdgeInsets.all(16.0),
-        child: _user == null
-            ? const flutter.Center(child: flutter.CircularProgressIndicator())
-            : flutter.Column(
-          crossAxisAlignment: flutter.CrossAxisAlignment.start,
-          children: [
-            const flutter.SizedBox(height: 20),
-            flutter.Center(
-              child: _userImage == null
-                  ? const flutter.Text('No image available.')
-                  : flutter.SizedBox(
-                width: 200, // Define the maximum width
-                height: 200, // Define the maximum height
-                child: flutter.Image.file(_userImage!),
-              ),
-            ),
-            const flutter.SizedBox(height: 20),
-            flutter.TextField(
-              controller: _nameController,
-              decoration: const flutter.InputDecoration(
-                labelText: 'Name',
-                border: flutter.OutlineInputBorder(),
-              ),
-            ),
-            const flutter.SizedBox(height: 10),
-            flutter.TextField(
-              controller: _emailController,
-              decoration: const flutter.InputDecoration(
-                labelText: 'Email',
-                border: flutter.OutlineInputBorder(),
-              ),
-            ),
-            const flutter.SizedBox(height: 10),
-            flutter.TextField(
-              controller: _descriptionController,
-              decoration: const flutter.InputDecoration(
-                labelText: 'Description',
-                border: flutter.OutlineInputBorder(),
-              ),
-            ),
-            const flutter.SizedBox(height: 20),
-            flutter.Row(
-              mainAxisAlignment: flutter.MainAxisAlignment.spaceBetween,
-              children: [
-                flutter.Switch(
-                  value: _saveMessages,
-                  onChanged: (value) {
-                    setState(() {
-                      _saveMessages = value;
-                    });
-                  },
-                ),
-                const flutter.Text(
-                  'Save Messages',
-                  style: flutter.TextStyle(fontSize: 16),
-                ),
-              ],
-            ),
-            const flutter.Spacer(),
-            flutter.SizedBox(
-              width: double.infinity,
-              child: flutter.ElevatedButton(
-                onPressed: _saveUser,
-                style: flutter.ElevatedButton.styleFrom(
-                  backgroundColor: flutter.Colors.blue,
-                  padding: const flutter.EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const flutter.Text(
-                  'SAVE',
-                  style: flutter.TextStyle(fontSize: 16, fontWeight: flutter.FontWeight.bold),
+      body: flutter.SafeArea(
+        child: flutter.SingleChildScrollView(
+          padding: const flutter.EdgeInsets.all(16.0),
+          child: _user == null
+              ? const flutter.Center(child: flutter.CircularProgressIndicator())
+              : flutter.Column(
+            crossAxisAlignment: flutter.CrossAxisAlignment.start,
+            children: [
+              const flutter.SizedBox(height: 20),
+              flutter.Center(
+                child: _userImage == null
+                    ? const flutter.Text('No image available.')
+                    : flutter.SizedBox(
+                  width: 200, // Define the maximum width
+                  height: 200, // Define the maximum height
+                  child: flutter.Image.file(_userImage!),
                 ),
               ),
-            ),
-            const flutter.SizedBox(height: 10),
-            flutter.SizedBox(
-              width: double.infinity,
-              child: flutter.ElevatedButton(
-                onPressed: _deleteUser,
-                style: flutter.ElevatedButton.styleFrom(
-                  backgroundColor: flutter.Colors.red,
-                  padding: const flutter.EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const flutter.Text(
-                  'DELETE',
-                  style: flutter.TextStyle(fontSize: 16, fontWeight: flutter.FontWeight.bold),
+              const flutter.SizedBox(height: 20),
+              flutter.TextField(
+                controller: _nameController,
+                decoration: const flutter.InputDecoration(
+                  labelText: 'Name',
+                  border: flutter.OutlineInputBorder(),
                 ),
               ),
-            ),
-            const flutter.SizedBox(height: 10),
-          ],
+              const flutter.SizedBox(height: 10),
+              flutter.TextField(
+                controller: _emailController,
+                decoration: const flutter.InputDecoration(
+                  labelText: 'Email',
+                  border: flutter.OutlineInputBorder(),
+                ),
+              ),
+              const flutter.SizedBox(height: 10),
+              flutter.TextField(
+                controller: _descriptionController,
+                decoration: const flutter.InputDecoration(
+                  labelText: 'Description',
+                  border: flutter.OutlineInputBorder(),
+                ),
+              ),
+              const flutter.SizedBox(height: 20),
+              flutter.Row(
+                mainAxisAlignment: flutter.MainAxisAlignment.spaceBetween,
+                children: [
+                  flutter.Switch(
+                    value: _saveMessages,
+                    onChanged: (value) {
+                      setState(() {
+                        _saveMessages = value;
+                      });
+                    },
+                  ),
+                  const flutter.Text(
+                    'Save Messages',
+                    style: flutter.TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
+              const flutter.SizedBox(height: 20),
+              flutter.SizedBox(
+                width: double.infinity,
+                child: flutter.ElevatedButton(
+                  onPressed: _saveUser,
+                  style: flutter.ElevatedButton.styleFrom(
+                    backgroundColor: flutter.Colors.blue,
+                    padding: const flutter.EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const flutter.Text(
+                    'SAVE',
+                    style: flutter.TextStyle(fontSize: 16, fontWeight: flutter.FontWeight.bold),
+                  ),
+                ),
+              ),
+              const flutter.SizedBox(height: 10),
+              flutter.SizedBox(
+                width: double.infinity,
+                child: flutter.ElevatedButton(
+                  onPressed: _deleteUser,
+                  style: flutter.ElevatedButton.styleFrom(
+                    backgroundColor: flutter.Colors.red,
+                    padding: const flutter.EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const flutter.Text(
+                    'DELETE',
+                    style: flutter.TextStyle(fontSize: 16, fontWeight: flutter.FontWeight.bold),
+                  ),
+                ),
+              ),
+              const flutter.SizedBox(height: 10),
+            ],
+          ),
         ),
       ),
     );

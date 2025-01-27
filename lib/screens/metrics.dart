@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:laboratorio/screens/objectivesMetrics.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/screens/objectives.dart';
@@ -243,7 +244,7 @@ class _DatabaseOverviewState extends State<DatabaseOverview> with WidgetsBinding
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => AddObjectiveScreen()),
+                            MaterialPageRoute(builder: (context) => UserMetricsScreen()),
                           );
                         },
                         child: Text('Go to Objectives'),
