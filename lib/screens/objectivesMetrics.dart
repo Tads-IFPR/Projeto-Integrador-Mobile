@@ -3,9 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
 
-import '../schemas/objectives.dart';
-import 'objectives.dart';
-
 class UserMetricsScreen extends StatefulWidget {
   const UserMetricsScreen({super.key});
 
@@ -19,59 +16,70 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
   @override
   void initState() {
     super.initState();
-    _dataFuture = fetchUserMetrics();
+    _dataFuture = _generateChartData();
   }
 
-  Future<List<Chat>> fetchAllChats() async {
-    final chats = await db.getAllRecords(db.chats);
-    return chats;
-  }
-
-  Future<List<ObjectiveChartData>> fetchUserMetrics() async {
+  Future<List<ObjectiveData>> _fetchAllObjectives() async {
     final lastUser = await _getLastUser();
     if (lastUser == null) {
       return [];
     }
 
-    final chatCount = await fetchChatCount(lastUser.id);
-    final allChats = await fetchAllChats();
-    final totalChats = allChats.length;
-
     final objectives = await db.customSelect(
-      'SELECT value, description FROM objectives WHERE userId = ? AND type = ?',
-      variables: [Variable.withInt(lastUser.id), Variable.withInt(ObjectiveType.chats.toInt())],
+      'SELECT value, description FROM objectives WHERE userId = ?',
+      variables: [Variable.withInt(lastUser.id)],
       readsFrom: {db.objectives},
-    ).map((row) async {
+    ).map((row) {
       final value = row.read<int>('value');
       final description = row.read<String>('description');
-      final categoryChatCount = await getCategoryChatCount(description);
-      return ObjectiveChartData(description, chatCount, value, totalChats, categoryChatCount);
+      return ObjectiveData(value, description);
     }).get();
 
-    return Future.wait(objectives);
+    return objectives;
   }
 
-  Future<int> fetchChatCount(int userId) async {
-    final chatCount = await db.customSelect(
-      'SELECT COUNT(*) as count FROM chats WHERE user_id = ?',
-      variables: [Variable.withInt(userId)],
-      readsFrom: {db.chats},
-    ).map((row) => row.read<int>('count')).getSingle();
-    return chatCount;
-  }
-
-  Future<int> getCategoryChatCount(String categoryName) async {
+  Future<Map<String, int>> _fetchChatCountsByCategory() async {
     final query = db.customSelect(
-      'SELECT COUNT(category_chat.id) as count '
+      'SELECT categories.name AS category_name, COUNT(chats.id) AS chat_count '
           'FROM categories '
           'LEFT JOIN category_chat ON categories.id = category_chat.category_id '
-          'WHERE categories.name = ?',
-      variables: [Variable.withString(categoryName)],
-      readsFrom: {db.categories, db.categoryChat},
+          'LEFT JOIN chats ON category_chat.chat_id = chats.id '
+          'GROUP BY categories.name',
+      readsFrom: {db.categories, db.categoryChat, db.chats},
     );
 
-    final result = await query.map((row) => row.read<int>('count')).getSingle();
-    return result;
+    final results = await query.map((row) {
+      final name = row.read<String>('category_name');
+      final count = row.read<int>('chat_count');
+      return MapEntry(name, count);
+    }).get();
+
+    return Map.fromEntries(results);
+  }
+
+  Future<List<ComparisonResult>> _compareObjectivesWithCategories(List<ObjectiveData> objectives, Map<String, int> chatCounts) async {
+    final results = <ComparisonResult>[];
+
+    for (final objective in objectives) {
+      chatCounts.forEach((category, count) {
+        if (objective.description.contains(category)) {
+          results.add(ComparisonResult(objective, count));
+        }
+      });
+    }
+
+    return results;
+  }
+
+  Future<List<ObjectiveChartData>> _generateChartData() async {
+    final objectives = await _fetchAllObjectives();
+    final chatCounts = await _fetchChatCountsByCategory();
+    final comparisonResults = await _compareObjectivesWithCategories(objectives, chatCounts);
+
+    return comparisonResults.map((result) {
+      final comparisonValue = result.chatCount;
+      return ObjectiveChartData(result.objective.description, result.objective.value, comparisonValue);
+    }).toList();
   }
 
   Future<User?> _getLastUser() async {
@@ -107,10 +115,8 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
             itemBuilder: (context, index) {
               final objective = objectives[index];
               final chartData = [
-                PieChartData('Saved Chats', objective.savedChats),
-                PieChartData('Objective Chats', objective.objectiveChats),
-                PieChartData('Total Chats', objective.totalChats),
-                PieChartData('Category Chats', objective.categoryChatCount),
+                PieChartData('Objective Value', objective.objectiveValue),
+                PieChartData('Chats Count', objective.comparisonValue),
               ];
 
               return Column(
@@ -144,15 +150,6 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => AddObjectiveScreen()),
-                      );
-                    },
-                    child: Text('Add Objectives'),
-                  ),
                 ],
               );
             },
@@ -163,14 +160,26 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
   }
 }
 
+class ObjectiveData {
+  final int value;
+  final String description;
+
+  ObjectiveData(this.value, this.description);
+}
+
 class ObjectiveChartData {
   final String description;
-  final int savedChats;
-  final int objectiveChats;
-  final int totalChats;
-  final int categoryChatCount;
+  final int objectiveValue;
+  final int comparisonValue;
 
-  ObjectiveChartData(this.description, this.savedChats, this.objectiveChats, this.totalChats, this.categoryChatCount);
+  ObjectiveChartData(this.description, this.objectiveValue, this.comparisonValue);
+}
+
+class ComparisonResult {
+  final ObjectiveData objective;
+  final int chatCount;
+
+  ComparisonResult(this.objective, this.chatCount);
 }
 
 class PieChartData {
