@@ -4,6 +4,7 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
 
+import '../schemas/objectives.dart';
 import 'objectives.dart';
 
 class UserMetricsScreen extends StatefulWidget {
@@ -30,13 +31,14 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
     }
 
     final objectives = await db.customSelect(
-      'SELECT value, description FROM objectives WHERE userId = ?',
+      'SELECT value, description, type FROM objectives WHERE userId = ?',
       variables: [Variable.withInt(lastUser.id)],
       readsFrom: {db.objectives},
     ).map((row) {
       final value = row.read<int>('value');
       final description = row.read<String>('description');
-      return ObjectiveData(value, description);
+      final type = ObjectiveTypeExtension.fromInt(row.read<int>('type'));
+      return ObjectiveData(value, description, type);
     }).get();
 
     return objectives;
@@ -61,17 +63,48 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
     return Map.fromEntries(results);
   }
 
-  Future<List<ComparisonResult>> _compareObjectivesWithCategories(List<ObjectiveData> objectives, Map<String, int> chatCounts) async {
+  Future<Map<String, int>> getMessageCountsByCategory() async {
+    final query = db.customSelect(
+      'SELECT categories.name, COUNT(messages.id) as count '
+          'FROM categories '
+          'LEFT JOIN category_chat ON categories.id = category_chat.category_id '
+          'LEFT JOIN chats ON category_chat.chat_id = chats.id '
+          'LEFT JOIN messages ON chats.id = messages.chat_id '
+          'GROUP BY categories.name',
+      readsFrom: {db.categories, db.categoryChat, db.chats, db.messages},
+    );
+
+    final results = await query.map((row) {
+      final name = row.read<String>('name');
+      final count = row.read<int>('count');
+      return MapEntry(name, count);
+    }).get();
+
+    return Map.fromEntries(results);
+  }
+
+  Future<List<ComparisonResult>> _compareObjectivesWithCategories(List<ObjectiveData> objectives, Map<String, int> chatCounts, Map<String, int> messageCounts) async {
     final results = <ComparisonResult>[];
 
     for (final objective in objectives) {
       bool matched = false;
-      for (var category in chatCounts.entries) {
-        if (objective.description.contains(category.key)) {
-          results.add(ComparisonResult(objective, category.value));
-          matched = true;
+
+      if (objective.type == ObjectiveType.messages) {
+        for (var category in messageCounts.entries) {
+          if (objective.description.contains(category.key)) {
+            results.add(ComparisonResult(objective, category.value));
+            matched = true;
+          }
+        }
+      } else if (objective.type == ObjectiveType.chats) {
+        for (var category in chatCounts.entries) {
+          if (objective.description.contains(category.key)) {
+            results.add(ComparisonResult(objective, category.value));
+            matched = true;
+          }
         }
       }
+
       if (!matched) {
         results.add(ComparisonResult(objective, 0));
       }
@@ -83,11 +116,12 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
   Future<List<ObjectiveChartData>> _generateChartData() async {
     final objectives = await _fetchAllObjectives();
     final chatCounts = await _fetchChatCountsByCategory();
-    final comparisonResults = await _compareObjectivesWithCategories(objectives, chatCounts);
+    final messageCounts = await getMessageCountsByCategory();
+    final comparisonResults = await _compareObjectivesWithCategories(objectives, chatCounts, messageCounts);
 
     return comparisonResults.map((result) {
       final comparisonValue = result.chatCount;
-      return ObjectiveChartData(result.objective.description, result.objective.value, comparisonValue);
+      return ObjectiveChartData(result.objective.description, result.objective.value, comparisonValue, result.objective.type);
     }).toList();
   }
 
@@ -104,7 +138,6 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
       _selectedIndex = index;
     });
 
-    // Navigate to the selected screen
     switch (index) {
       case 0:
         Navigator.pushReplacementNamed(context, '/chat');
@@ -147,7 +180,7 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
               final objective = objectives[index];
               final chartData = [
                 PieChartData('Objective Value', objective.objectiveValue),
-                PieChartData('Chats Count', objective.comparisonValue),
+                PieChartData(objective.type == ObjectiveType.messages ? 'Messages Count' : 'Chats Count', objective.comparisonValue),
               ];
 
               return Column(
@@ -159,7 +192,7 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
-                    height: 300,
+                    height: 150,
                     child: SfCircularChart(
                       legend: Legend(
                         isVisible: true,
@@ -207,16 +240,20 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
 class ObjectiveData {
   final int value;
   final String description;
+  final ObjectiveType type;
 
-  ObjectiveData(this.value, this.description);
+  ObjectiveData(this.value, this.description, this.type);
+
+  int? get id => null;
 }
 
 class ObjectiveChartData {
   final String description;
   final int objectiveValue;
   final int comparisonValue;
+  final ObjectiveType type;
 
-  ObjectiveChartData(this.description, this.objectiveValue, this.comparisonValue);
+  ObjectiveChartData(this.description, this.objectiveValue, this.comparisonValue, this.type);
 }
 
 class ComparisonResult {
