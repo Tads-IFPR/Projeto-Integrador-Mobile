@@ -31,14 +31,15 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
     }
 
     final objectives = await db.customSelect(
-      'SELECT value, description, type FROM objectives WHERE userId = ?',
+      'SELECT id, value, description, type FROM objectives WHERE userId = ?',
       variables: [Variable.withInt(lastUser.id)],
       readsFrom: {db.objectives},
     ).map((row) {
+      final id = row.read<int>('id');
       final value = row.read<int>('value');
       final description = row.read<String>('description');
       final type = ObjectiveTypeExtension.fromInt(row.read<int>('type'));
-      return ObjectiveData(value, description, type);
+      return ObjectiveData(id, value, description, type);
     }).get();
 
     return objectives;
@@ -121,7 +122,7 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
 
     return comparisonResults.map((result) {
       final comparisonValue = result.chatCount;
-      return ObjectiveChartData(result.objective.description, result.objective.value, comparisonValue, result.objective.type);
+      return ObjectiveChartData(result.objective.id, result.objective.description, result.objective.value, comparisonValue, result.objective.type);
     }).toList();
   }
 
@@ -186,9 +187,37 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    objective.description,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        objective.description,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.edit),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddObjectiveScreen(objective: ObjectiveData(objective.id, objective.objectiveValue, objective.description, objective.type)),                                ),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () async {
+                              await db.deleteRecordById(db.objectives, objective.id);
+                              setState(() {
+                                _dataFuture = _generateChartData();
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
@@ -238,22 +267,22 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
 }
 
 class ObjectiveData {
+  final int id;
   final int value;
   final String description;
   final ObjectiveType type;
 
-  ObjectiveData(this.value, this.description, this.type);
-
-  int? get id => null;
+  ObjectiveData(this.id, this.value, this.description, this.type);
 }
 
 class ObjectiveChartData {
+  final int id;
   final String description;
   final int objectiveValue;
   final int comparisonValue;
   final ObjectiveType type;
 
-  ObjectiveChartData(this.description, this.objectiveValue, this.comparisonValue, this.type);
+  ObjectiveChartData(this.id, this.description, this.objectiveValue, this.comparisonValue, this.type);
 }
 
 class ComparisonResult {
