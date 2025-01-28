@@ -182,21 +182,25 @@ class _ChatState extends State<ChatScreen> {
             Expanded(
               child: _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : Container(
-                padding: const EdgeInsetsDirectional.only(
-                  start: 16,
-                  end: 16,
-                  top: 8,
-                  bottom: 8,
-                ),
-                child: messages.length > 0 ? ListView.builder(
-                  controller: _scrollController,
-                  itemCount: messages.length,
-                  reverse: false,
-                  itemBuilder: (context, index) {
-                    return messages[index];
-                  },
-                ) : const Suggestion()
+              : (
+                messages.length > 0
+                ? Container(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 16,
+                    end: 16,
+                    top: 8,
+                    bottom: 8,
+                  ),
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: messages.length,
+                    reverse: false,
+                    itemBuilder: (context, index) {
+                      return messages[index];
+                    },
+                  )
+                )
+                : const Suggestion()
               ),
             ),
             Column(
