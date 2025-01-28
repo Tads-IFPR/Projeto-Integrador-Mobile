@@ -2,6 +2,9 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
+import 'package:laboratorio/components/bottomNavigator.dart';
+
+import 'objectives.dart';
 
 class UserMetricsScreen extends StatefulWidget {
   const UserMetricsScreen({super.key});
@@ -12,6 +15,7 @@ class UserMetricsScreen extends StatefulWidget {
 
 class _UserMetricsScreenState extends State<UserMetricsScreen> {
   late Future<List<ObjectiveChartData>> _dataFuture;
+  int _selectedIndex = 3;
 
   @override
   void initState() {
@@ -61,11 +65,16 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
     final results = <ComparisonResult>[];
 
     for (final objective in objectives) {
-      chatCounts.forEach((category, count) {
-        if (objective.description.contains(category)) {
-          results.add(ComparisonResult(objective, count));
+      bool matched = false;
+      for (var category in chatCounts.entries) {
+        if (objective.description.contains(category.key)) {
+          results.add(ComparisonResult(objective, category.value));
+          matched = true;
         }
-      });
+      }
+      if (!matched) {
+        results.add(ComparisonResult(objective, 0));
+      }
     }
 
     return results;
@@ -88,6 +97,28 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
       return users.last;
     }
     return null;
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Navigate to the selected screen
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/chat');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/history');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(context, '/metrics');
+        break;
+    }
   }
 
   @override
@@ -155,6 +186,19 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
             },
           );
         },
+      ),
+      bottomNavigationBar: BottomNavigator(
+        onItemTapped: _onItemTapped,
+        selectedIndex: _selectedIndex,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddObjectiveScreen()),
+          );
+        },
+        child: const Icon(Icons.add),
       ),
     );
   }
