@@ -6,7 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/dao/profile.dart';
 import 'package:laboratorio/screens/configuration.dart';
-import 'package:laboratorio/screens/metrics.dart'; // Importe a tela DatabaseOverview
 
 class UserProfile extends flutter.StatefulWidget {
   final int userId;
@@ -75,6 +74,44 @@ class _UserProfileState extends flutter.State<UserProfile> {
         _descriptionController.text = user?.description ?? '';
         _saveMessages = user?.isSaveChats ?? false;
       });
+    }
+  }
+
+  Future<void> _updateUserImage() async {
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      final file = FilesdbCompanion.insert(
+        mimeType: 'image/jpeg',
+        size: await image.length(),
+        path: image.path,
+        duration: const drift.Value.absent(),
+      );
+
+      try {
+        final imageId = await db.into(db.filesdb).insert(file);
+        final updatedUser = UsersCompanion(
+          id: drift.Value(_user!.id),
+          name: drift.Value(_user!.name),
+          email: drift.Value(_user!.email),
+          description: drift.Value(_user!.description),
+          isSaveChats: drift.Value(_user!.isSaveChats),
+          photoId: drift.Value(imageId),
+        );
+
+        await db.updateRecord(db.users, updatedUser);
+        setState(() {
+          _userImage = File(image.path);
+        });
+
+        flutter.ScaffoldMessenger.of(context).showSnackBar(
+          const flutter.SnackBar(content: flutter.Text('User image updated successfully')),
+        );
+      } catch (e) {
+        flutter.ScaffoldMessenger.of(context).showSnackBar(
+          flutter.SnackBar(content: flutter.Text('Error updating user image: $e')),
+        );
+      }
     }
   }
 
@@ -150,6 +187,13 @@ class _UserProfileState extends flutter.State<UserProfile> {
                   width: 200, // Define the maximum width
                   height: 200, // Define the maximum height
                   child: flutter.Image.file(_userImage!),
+                ),
+              ),
+              const flutter.SizedBox(height: 10),
+              flutter.Center(
+                child: flutter.ElevatedButton(
+                  onPressed: _updateUserImage,
+                  child: const flutter.Text('Update Image'),
                 ),
               ),
               const flutter.SizedBox(height: 20),
