@@ -6,7 +6,7 @@ const _colorPrimary = Color.fromRGBO(116, 197, 232, 1);
 
 class TextBar extends StatelessWidget {
   final TextEditingController controller;
-  final Function() onSendMessage;
+  final Function(String?) onSendMessage;
   final Function() startRecording;
   final Function() stopRecording;
   final Function() pickImages;
@@ -71,7 +71,7 @@ class TextBar extends StatelessWidget {
               )
             ),
             IconButton(
-              onPressed: onSendMessage,
+              onPressed: () => onSendMessage(null),
               icon: const Icon(Icons.send),
             ),
           ],

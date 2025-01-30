@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 
 const loremIpsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In sit amet suscipit ligula, nec elementum lorem. Phasellus volutpat sollicitudin lacus, quis pulvinar lectus aliquet nec. Nam vulputate nulla quis imperdiet vulputate. Aenean consequat, risus sed pellentesque convallis, urna ipsum tincidunt nisi, sit amet sagittis magna justo in purus. Aliquam efficitur, nunc eget interdum tincidunt, justo erat fermentum felis, eget consequat orci nulla mattis purus. Cras mollis pellentesque vulputate. Etiam a ligula a turpis placerat pharetra suscipit vel quam. Duis volutpat ultrices libero. Nunc congue nisi id quam vehicula eleifend at ut est. Pellentesque laoreet justo vitae mi rhoncus, id eleifend ante consequat.';
 
@@ -13,7 +12,8 @@ class OpenAIService {
 
   final String _baseUrl = 'https://api.openai.com/v1';
 
-  Future<Map<String, dynamic>?> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
+  Future<Map<String, dynamic>> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
+    // throw Exception('Internal test');
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ class OpenAIService {
           },
           'strict': true,
         }
-      } 
+      }
     });
 
     // return {
@@ -110,15 +110,16 @@ class OpenAIService {
         };
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
-        return null;
+        throw Exception('Failed to get a response');
       }
     } catch (e) {
       print('Exception occurred: $e');
-      return null;
+      rethrow;
     }
   }
 
-  Future<String?> transcribeAudio(File audioFile) async {
+  Future<String> transcribeAudio(File audioFile) async {
+    // throw Exception('Internal test');
     final url = Uri.parse('$_baseUrl/audio/transcriptions');
     final headers = {
       'Authorization': 'Bearer $apiKey',
@@ -147,49 +148,91 @@ class OpenAIService {
         return responseData['text']?.trim();
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
-        return null;
+        throw Exception('Failed to get a response');
       }
     } catch (e) {
       print('Exception occurred: $e');
-      return null;
+      rethrow;
     }
   }
 
-  Future<File?> textToSpeach(String input, {String model = 'tts-1', String voice = 'alloy'}) async {
-   final url = Uri.parse('$_baseUrl/audio/speech');
+  Future<List<Map<String, String>>> getSuggestions(List<String> themes, {String model = 'gpt-4o-mini'}) async {
+    // throw Exception('Internal test');
+    final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $apiKey',
     };
 
+    List<dynamic> messages = [
+      {
+        'role': 'system',
+        'content': 'Você é um assistente que sugere ideias para chats baseados em temas fornecidos.'
+      },
+      {
+        'role': 'user',
+        'content': 'Sugira chats baseados nos seguintes temas: ${themes.join(", ")}. A quantidade de sugestões deve ser igual a quantidade de temas.'
+      },
+    ];
+
     final body = jsonEncode({
       'model': model,
-      'input': input,
-      'voice': voice,
+      'messages': messages,
+      'temperature': 0.7,
+      'response_format': {
+        'type': 'json_schema',
+        'json_schema': {
+          'name': 'suggestions',
+          'schema': {
+            'type': 'object',
+            'properties': {
+              'suggestions': {
+                'type': 'array',
+                'items': {
+                  'type': 'string'
+                }
+              },
+            },
+            'required': [
+              'suggestions',
+            ],
+            'additionalProperties': false
+          },
+          'strict': true,
+        }
+      }
     });
 
     try {
       final response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 200) {
-        final audioData = jsonDecode(response.body)?.trim();
-        if (audioData == null) return null;
+        final Map<String, dynamic> responseData = jsonDecode(utf8.decode(response.body.codeUnits));
+        var content = responseData['choices'][0]['message']['content'];
 
-        final audioBytes = base64Decode(audioData);
-        final directory = await getApplicationDocumentsDirectory();
-        final fileName = 'audio-${DateTime.now().millisecondsSinceEpoch}.mp3';
-        final filePath = '${directory.path}/$fileName';
-
-        await File(filePath).writeAsBytes(audioBytes);
-
-        return File(filePath);
+        var tempJson = jsonDecode(content);
+        List<dynamic> suggestions = tempJson?['suggestions'] ?? [];
+        var index = 0;
+        return themes.map((theme) {
+          var suggestion = suggestions[index];
+          index++;
+          return {
+            'title': theme,
+            'message': suggestion is String ? suggestion : 'No message',
+          };
+        }).toList();
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
-        return null;
+        throw Exception('Failed to get suggestions');
       }
     } catch (e) {
       print('Exception occurred: $e');
-      return null;
+      rethrow;
     }
+  }
+
+  // TODO: not implemented
+  Future<File?> textToSpeach(String input, {String model = 'tts-1', String voice = 'alloy'}) async {
+    return null;
   }
 }
