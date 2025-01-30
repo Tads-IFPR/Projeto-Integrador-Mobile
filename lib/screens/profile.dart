@@ -19,6 +19,7 @@ class UserProfile extends flutter.StatefulWidget {
 class _UserProfileState extends flutter.State<UserProfile> {
   User? _user;
   File? _userImage;
+  File? _selectedImage;
   final flutter.TextEditingController _nameController = flutter.TextEditingController();
   final flutter.TextEditingController _emailController = flutter.TextEditingController();
   final flutter.TextEditingController _descriptionController = flutter.TextEditingController();
@@ -41,7 +42,6 @@ class _UserProfileState extends flutter.State<UserProfile> {
   Future<void> _fetchUser() async {
     final lastUserId = await _fetchLastUserId();
     if (lastUserId == null) {
-      // Handle case where there are no users in the database
       return;
     }
 
@@ -77,46 +77,29 @@ class _UserProfileState extends flutter.State<UserProfile> {
     }
   }
 
-  Future<void> _updateUserImage() async {
+  Future<void> _pickUserImage() async {
     final ImagePicker _picker = ImagePicker();
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      final file = FilesdbCompanion.insert(
-        mimeType: 'image/jpeg',
-        size: await image.length(),
-        path: image.path,
-        duration: const drift.Value.absent(),
-      );
-
-      try {
-        final imageId = await db.into(db.filesdb).insert(file);
-        final updatedUser = UsersCompanion(
-          id: drift.Value(_user!.id),
-          name: drift.Value(_user!.name),
-          email: drift.Value(_user!.email),
-          description: drift.Value(_user!.description),
-          isSaveChats: drift.Value(_user!.isSaveChats),
-          photoId: drift.Value(imageId),
-        );
-
-        await db.updateRecord(db.users, updatedUser);
-        setState(() {
-          _userImage = File(image.path);
-        });
-
-        flutter.ScaffoldMessenger.of(context).showSnackBar(
-          const flutter.SnackBar(content: flutter.Text('User image updated successfully')),
-        );
-      } catch (e) {
-        flutter.ScaffoldMessenger.of(context).showSnackBar(
-          flutter.SnackBar(content: flutter.Text('Error updating user image: $e')),
-        );
-      }
+      setState(() {
+        _selectedImage = File(image.path);
+      });
     }
   }
 
   Future<void> _saveUser() async {
     if (_user == null) return;
+
+    int? imageId;
+    if (_selectedImage != null) {
+      final file = FilesdbCompanion.insert(
+        mimeType: 'image/jpeg',
+        size: await _selectedImage!.length(),
+        path: _selectedImage!.path,
+        duration: const drift.Value.absent(),
+      );
+      imageId = await db.into(db.filesdb).insert(file);
+    }
 
     final updatedUser = UsersCompanion(
       id: drift.Value(_user!.id),
@@ -124,11 +107,16 @@ class _UserProfileState extends flutter.State<UserProfile> {
       email: drift.Value(_emailController.text),
       description: drift.Value(_descriptionController.text),
       isSaveChats: drift.Value(_saveMessages),
-      photoId: drift.Value(_user!.photoId),
+      photoId: imageId != null ? drift.Value(imageId) : drift.Value(_user!.photoId),
     );
 
     try {
       await db.updateRecord(db.users, updatedUser);
+      setState(() {
+        if (_selectedImage != null) {
+          _userImage = _selectedImage;
+        }
+      });
       flutter.ScaffoldMessenger.of(context).showSnackBar(
         const flutter.SnackBar(content: flutter.Text('User updated successfully')),
       );
@@ -181,18 +169,24 @@ class _UserProfileState extends flutter.State<UserProfile> {
             children: [
               const flutter.SizedBox(height: 20),
               flutter.Center(
-                child: _userImage == null
-                    ? const flutter.Text('No image available.')
-                    : flutter.SizedBox(
-                  width: 200, // Define the maximum width
-                  height: 200, // Define the maximum height
+                child: _selectedImage != null
+                    ? flutter.SizedBox(
+                  width: 200,
+                  height: 200,
+                  child: flutter.Image.file(_selectedImage!),
+                )
+                    : _userImage != null
+                    ? flutter.SizedBox(
+                  width: 200,
+                  height: 200,
                   child: flutter.Image.file(_userImage!),
-                ),
+                )
+                    : const flutter.Text('No image available.'),
               ),
               const flutter.SizedBox(height: 10),
               flutter.Center(
                 child: flutter.ElevatedButton(
-                  onPressed: _updateUserImage,
+                  onPressed: _pickUserImage,
                   child: const flutter.Text('Update Image'),
                 ),
               ),

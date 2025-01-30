@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/schemas/objectives.dart';
-import '../components/bottomNavigator.dart';
+import 'package:laboratorio/components/bottomNavigator.dart';
+import 'package:laboratorio/screens/mainScreen.dart';
+
 import 'objectivesMetrics.dart';
 
 class AddObjectiveScreen extends StatefulWidget {
@@ -19,7 +21,6 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
   final _descriptionController = TextEditingController();
   final _valueController = TextEditingController();
   ObjectiveType? _selectedType;
-  int _selectedIndex = 0;
   int? _userId;
 
   @override
@@ -64,35 +65,28 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
       if (widget.objective == null) {
         await db.createRecord(db.objectives, objective);
       } else {
-        await db.updateRecord(db.objectives, objective.copyWith(id: Value(widget.objective!.id)));
+        await db.updateRecord(
+          db.objectives,
+          objective.copyWith(id: Value(widget.objective!.id)),
+        );
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Objective saved successfully')),
+        const SnackBar(content: Text('Objective saved successfully')),
       );
-      Navigator.pop(context);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreen(initialIndex: 3)),
+      );
     }
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/chat');
-        break;
-      case 1:
-        Navigator.pushReplacementNamed(context, '/history');
-        break;
-      case 2:
-        Navigator.pushReplacementNamed(context, '/profile');
-        break;
-      case 3:
-        Navigator.pushReplacementNamed(context, '/metrics');
-        break;
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MainScreen(initialIndex: index)),
+    );
   }
 
   @override
@@ -109,7 +103,7 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
             children: [
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(labelText: 'Description'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a description';
@@ -119,7 +113,7 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
               ),
               TextFormField(
                 controller: _valueController,
-                decoration: InputDecoration(labelText: 'Value'),
+                decoration: const InputDecoration(labelText: 'Value'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -130,7 +124,7 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
               ),
               DropdownButtonFormField<ObjectiveType>(
                 value: _selectedType,
-                decoration: InputDecoration(labelText: 'Type'),
+                decoration: const InputDecoration(labelText: 'Type'),
                 items: ObjectiveType.values.map((ObjectiveType type) {
                   return DropdownMenuItem<ObjectiveType>(
                     value: type,
@@ -149,7 +143,7 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveObjective,
                 child: Text(widget.objective == null ? 'Save Objective' : 'Update Objective'),
@@ -160,7 +154,7 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
       ),
       bottomNavigationBar: BottomNavigator(
         onItemTapped: _onItemTapped,
-        selectedIndex: _selectedIndex,
+        selectedIndex: 3,
       ),
     );
   }

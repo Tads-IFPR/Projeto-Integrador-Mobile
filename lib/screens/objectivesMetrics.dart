@@ -1,8 +1,9 @@
-import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
+import 'package:drift/drift.dart' hide Column;
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:laboratorio/database/database.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
+import 'package:laboratorio/screens/mainScreen.dart';
 
 import '../schemas/objectives.dart';
 import 'objectives.dart';
@@ -135,24 +136,10 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch (index) {
-      case 0:
-        Navigator.pushReplacementNamed(context, '/chat');
-        break;
-      case 1:
-        Navigator.pushReplacementNamed(context, '/history');
-        break;
-      case 2:
-        Navigator.pushReplacementNamed(context, '/profile');
-        break;
-      case 3:
-        Navigator.pushReplacementNamed(context, '/metrics');
-        break;
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MainScreen(initialIndex: index)),
+    );
   }
 
   @override

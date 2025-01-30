@@ -96,6 +96,7 @@ class _DatabaseOverviewState extends State<DatabaseOverview> with WidgetsBinding
 
   List<PieChartData> createPieChartData(Map<String, int> counts) {
     return counts.entries
+        .where((entry) => entry.value != 0)
         .map((entry) => PieChartData(entry.key, entry.value))
         .toList();
   }
