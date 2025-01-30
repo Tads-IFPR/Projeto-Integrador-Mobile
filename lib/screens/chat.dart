@@ -39,8 +39,8 @@ class _ChatState extends State<ChatScreen> {
     });
   } 
 
-  void _sendMessage() async {
-    final userInput = _controller.text;
+  _sendMessage(String? input) async {
+    final userInput = input ?? _controller.text;
     if (userInput.isEmpty) return;
     toggleLoading();
     _controller.clear();
@@ -200,7 +200,7 @@ class _ChatState extends State<ChatScreen> {
                     },
                   )
                 )
-                : const Suggestion()
+                : Center(child: Suggestion(sendMessage: _sendMessage))
               ),
             ),
             Column(

@@ -5,8 +5,10 @@ import 'package:laboratorio/main.dart';
 import 'package:laboratorio/styles/default.dart';
 
 class Suggestion extends StatefulWidget {
+  final Function(String?) sendMessage;
   const Suggestion({
     super.key,
+    required this.sendMessage,
   });
 
   @override
@@ -35,6 +37,7 @@ class _SuggestionState extends State<Suggestion> {
   Widget build(BuildContext context) {
     return GridView.builder(
       padding: const EdgeInsets.all(8),
+      shrinkWrap: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 8,
@@ -44,11 +47,14 @@ class _SuggestionState extends State<Suggestion> {
       itemBuilder: (context, index) {
         var color = index % 3 == 0 ? colorPrimary : index % 3 == 1 ? colorSecondary : colorTerdiary;
         var lightColor = index % 3 == 0 ? colorPrimaryLight : index % 3 == 1 ? colorSecondaryLight : colorTerdiaryLight;
-        return CardSuggestion(
-          title: categoriesSuggestions[index]['title'],
-          text: categoriesSuggestions[index]['message'],
-          color: color,
-          lightColor: lightColor,
+        return GestureDetector(
+          onTap: () => widget.sendMessage(categoriesSuggestions[index]['message']),
+          child: CardSuggestion(
+            title: categoriesSuggestions[index]['title'],
+            text: categoriesSuggestions[index]['message'],
+            color: color,
+            lightColor: lightColor,
+          ),
         );
       },
     );
