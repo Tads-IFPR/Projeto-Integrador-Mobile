@@ -157,6 +157,7 @@ class OpenAIService {
   }
 
   Future<List<Map<String, String>>> getSuggestions(List<String> themes, {String model = 'gpt-4o-mini'}) async {
+    // throw Exception('Internal test');
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
