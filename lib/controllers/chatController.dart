@@ -54,12 +54,12 @@ class ChatController {
     }
   }
 
-  Future<List<Map<String, String>>> getSuggestions(List<String> themes) {
+  Future<List<Map<String, String>>> getSuggestions(List<String> themes) async {
     try {
-      return openAIService.getSuggestions(themes);
+      return await openAIService.getSuggestions(themes);
     } catch (e) {
       try {
-        return geminiService.getSuggestions(themes);
+        return await geminiService.getSuggestions(themes);
       } catch (e) {
         rethrow;
       }
