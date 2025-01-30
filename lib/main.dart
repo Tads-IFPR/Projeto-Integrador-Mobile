@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:laboratorio/controllers/chatController.dart';
 import 'package:laboratorio/dao/chat.dart';
@@ -6,7 +7,11 @@ import 'package:laboratorio/screens/chat.dart';
 import 'package:laboratorio/components/bottomNavigator.dart';
 import 'package:laboratorio/screens/history.dart';
 import 'package:laboratorio/services/geminiService.dart';
+import 'package:laboratorio/screens/profile.dart';
 import 'package:laboratorio/services/openAIService.dart';
+import 'package:laboratorio/screens/configuration.dart';
+import 'package:laboratorio/screens/metrics.dart';
+import 'package:laboratorio/styles/default.dart';
 
 void main() {
   runApp(const App());
@@ -17,22 +22,30 @@ final geminiService = Geminiservice('your-token-here');
 final chatController = ChatController(geminiService, openAIService);
 
 class App extends StatefulWidget {
-  const App({super.key});
+
+  final int initialIndex;
+  const App({super.key, this.initialIndex = 0});
 
   @override
   State<App> createState() => _AppState();
 }
 
 class _AppState extends State<App> {
-  late List<Widget> pages;
+  List<Widget> pages = [];
+  var _selectedIndex = 0;
+
+  bool? get isSaveChats => null;
+
+  int? get photoId => null;
+
+
+  get userId => 1;
 
   @override
   void initState() {
     super.initState();
-    refreshPages();
+    _checkInitialScreen();
   }
-
-  var _selectedIndex = 0;
 
   void _onItemTapped(int index) {
     if (index == 0) {
@@ -63,14 +76,39 @@ class _AppState extends State<App> {
     });
   }
 
+  Future<void> saveUser(String name, String email) async {
+    final user = UsersCompanion(
+      name: Value(name),
+      email: Value(email),
+      isSaveChats: Value(isSaveChats!),
+      photoId: Value(photoId),
+    );
+
+    await db.createRecord(db.users, user);
+  }
+
   void refreshPages() {
     setState(() {
       pages = [
         const ChatScreen(),
         History(onChatTap: onChatTap, onDeleteChat: onDeleteChat),
-        const Text('Profile'),
+        UserProfile(userId: userId),
+        const DatabaseOverview(),
       ];
     });
+  }
+
+  Future<void> _checkInitialScreen() async {
+    final users = await db.getAllRecords(db.users);
+    if (users.isEmpty) {
+      setState(() {
+        pages = [
+          const Configuration()
+        ];
+      });
+    } else {
+      refreshPages();
+    }
   }
 
   @override
@@ -82,11 +120,13 @@ class _AppState extends State<App> {
         useMaterial3: true,
       ),
       home: Scaffold(
-        body: pages[_selectedIndex],
-        bottomNavigationBar: BottomNavigator(
+        body: pages.asMap().containsKey(_selectedIndex) 
+          ? pages[_selectedIndex]
+          : const Center(child: CircularProgressIndicator(color: colorPrimary)),
+        bottomNavigationBar: pages.length > 1 ? BottomNavigator(
           onItemTapped: _onItemTapped,
           selectedIndex: _selectedIndex,
-        ),
+        ) : null,
       )
     );
   }

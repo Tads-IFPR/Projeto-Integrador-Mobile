@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:laboratorio/schemas/objectives.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:laboratorio/schemas/users.dart';
@@ -11,6 +12,7 @@ import 'package:laboratorio/schemas/messages.dart';
 import 'package:laboratorio/schemas/files.dart';
 import 'package:laboratorio/schemas/category_chat.dart';
 import 'package:laboratorio/schemas/file_message.dart';
+import 'package:laboratorio/schemas/objectives.dart';
 part 'database.g.dart';
 
 LazyDatabase _openConnection() {
@@ -28,7 +30,7 @@ LazyDatabase _openConnection() {
   });
 }
 
-@DriftDatabase(tables: [Users, Categories, Chats, Messages, Filesdb, CategoryChat, FileMessage])
+@DriftDatabase(tables: [Users, Categories, Chats, Messages, Filesdb, CategoryChat, FileMessage, Objectives])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 

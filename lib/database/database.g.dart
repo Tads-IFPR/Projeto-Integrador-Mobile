@@ -323,6 +323,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
   late final GeneratedColumn<String> email = GeneratedColumn<String>(
       'email', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _descriptionMeta =
+      const VerificationMeta('description');
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+      'description', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _isSaveChatsMeta =
       const VerificationMeta('isSaveChats');
   @override
@@ -342,15 +348,9 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES filesdb (id)'));
-  static const VerificationMeta _languageMeta =
-      const VerificationMeta('language');
-  @override
-  late final GeneratedColumn<String> language = GeneratedColumn<String>(
-      'language', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, name, email, isSaveChats, photoId, language];
+      [id, name, email, description, isSaveChats, photoId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -376,6 +376,14 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     } else if (isInserting) {
       context.missing(_emailMeta);
     }
+    if (data.containsKey('description')) {
+      context.handle(
+          _descriptionMeta,
+          description.isAcceptableOrUnknown(
+              data['description']!, _descriptionMeta));
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
     if (data.containsKey('is_save_chats')) {
       context.handle(
           _isSaveChatsMeta,
@@ -385,12 +393,6 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
     if (data.containsKey('photo_id')) {
       context.handle(_photoIdMeta,
           photoId.isAcceptableOrUnknown(data['photo_id']!, _photoIdMeta));
-    }
-    if (data.containsKey('language')) {
-      context.handle(_languageMeta,
-          language.isAcceptableOrUnknown(data['language']!, _languageMeta));
-    } else if (isInserting) {
-      context.missing(_languageMeta);
     }
     return context;
   }
@@ -407,12 +409,12 @@ class $UsersTable extends Users with TableInfo<$UsersTable, User> {
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       email: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
+      description: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
       isSaveChats: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_save_chats'])!,
       photoId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}photo_id']),
-      language: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}language'])!,
     );
   }
 
@@ -426,27 +428,27 @@ class User extends DataClass implements Insertable<User> {
   final int id;
   final String name;
   final String email;
+  final String description;
   final bool isSaveChats;
   final int? photoId;
-  final String language;
   const User(
       {required this.id,
       required this.name,
       required this.email,
+      required this.description,
       required this.isSaveChats,
-      this.photoId,
-      required this.language});
+      this.photoId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
     map['email'] = Variable<String>(email);
+    map['description'] = Variable<String>(description);
     map['is_save_chats'] = Variable<bool>(isSaveChats);
     if (!nullToAbsent || photoId != null) {
       map['photo_id'] = Variable<int>(photoId);
     }
-    map['language'] = Variable<String>(language);
     return map;
   }
 
@@ -455,11 +457,11 @@ class User extends DataClass implements Insertable<User> {
       id: Value(id),
       name: Value(name),
       email: Value(email),
+      description: Value(description),
       isSaveChats: Value(isSaveChats),
       photoId: photoId == null && nullToAbsent
           ? const Value.absent()
           : Value(photoId),
-      language: Value(language),
     );
   }
 
@@ -470,9 +472,9 @@ class User extends DataClass implements Insertable<User> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       email: serializer.fromJson<String>(json['email']),
+      description: serializer.fromJson<String>(json['description']),
       isSaveChats: serializer.fromJson<bool>(json['isSaveChats']),
       photoId: serializer.fromJson<int?>(json['photoId']),
-      language: serializer.fromJson<String>(json['language']),
     );
   }
   @override
@@ -482,9 +484,9 @@ class User extends DataClass implements Insertable<User> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'email': serializer.toJson<String>(email),
+      'description': serializer.toJson<String>(description),
       'isSaveChats': serializer.toJson<bool>(isSaveChats),
       'photoId': serializer.toJson<int?>(photoId),
-      'language': serializer.toJson<String>(language),
     };
   }
 
@@ -492,26 +494,27 @@ class User extends DataClass implements Insertable<User> {
           {int? id,
           String? name,
           String? email,
+          String? description,
           bool? isSaveChats,
-          Value<int?> photoId = const Value.absent(),
-          String? language}) =>
+          Value<int?> photoId = const Value.absent()}) =>
       User(
         id: id ?? this.id,
         name: name ?? this.name,
         email: email ?? this.email,
+        description: description ?? this.description,
         isSaveChats: isSaveChats ?? this.isSaveChats,
         photoId: photoId.present ? photoId.value : this.photoId,
-        language: language ?? this.language,
       );
   User copyWithCompanion(UsersCompanion data) {
     return User(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       email: data.email.present ? data.email.value : this.email,
+      description:
+          data.description.present ? data.description.value : this.description,
       isSaveChats:
           data.isSaveChats.present ? data.isSaveChats.value : this.isSaveChats,
       photoId: data.photoId.present ? data.photoId.value : this.photoId,
-      language: data.language.present ? data.language.value : this.language,
     );
   }
 
@@ -521,16 +524,16 @@ class User extends DataClass implements Insertable<User> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('email: $email, ')
+          ..write('description: $description, ')
           ..write('isSaveChats: $isSaveChats, ')
-          ..write('photoId: $photoId, ')
-          ..write('language: $language')
+          ..write('photoId: $photoId')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, name, email, isSaveChats, photoId, language);
+      Object.hash(id, name, email, description, isSaveChats, photoId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -538,51 +541,51 @@ class User extends DataClass implements Insertable<User> {
           other.id == this.id &&
           other.name == this.name &&
           other.email == this.email &&
+          other.description == this.description &&
           other.isSaveChats == this.isSaveChats &&
-          other.photoId == this.photoId &&
-          other.language == this.language);
+          other.photoId == this.photoId);
 }
 
 class UsersCompanion extends UpdateCompanion<User> {
   final Value<int> id;
   final Value<String> name;
   final Value<String> email;
+  final Value<String> description;
   final Value<bool> isSaveChats;
   final Value<int?> photoId;
-  final Value<String> language;
   const UsersCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.email = const Value.absent(),
+    this.description = const Value.absent(),
     this.isSaveChats = const Value.absent(),
     this.photoId = const Value.absent(),
-    this.language = const Value.absent(),
   });
   UsersCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     required String email,
+    required String description,
     this.isSaveChats = const Value.absent(),
     this.photoId = const Value.absent(),
-    required String language,
   })  : name = Value(name),
         email = Value(email),
-        language = Value(language);
+        description = Value(description);
   static Insertable<User> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<String>? email,
+    Expression<String>? description,
     Expression<bool>? isSaveChats,
     Expression<int>? photoId,
-    Expression<String>? language,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (email != null) 'email': email,
+      if (description != null) 'description': description,
       if (isSaveChats != null) 'is_save_chats': isSaveChats,
       if (photoId != null) 'photo_id': photoId,
-      if (language != null) 'language': language,
     });
   }
 
@@ -590,16 +593,16 @@ class UsersCompanion extends UpdateCompanion<User> {
       {Value<int>? id,
       Value<String>? name,
       Value<String>? email,
+      Value<String>? description,
       Value<bool>? isSaveChats,
-      Value<int?>? photoId,
-      Value<String>? language}) {
+      Value<int?>? photoId}) {
     return UsersCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      description: description ?? this.description,
       isSaveChats: isSaveChats ?? this.isSaveChats,
       photoId: photoId ?? this.photoId,
-      language: language ?? this.language,
     );
   }
 
@@ -615,14 +618,14 @@ class UsersCompanion extends UpdateCompanion<User> {
     if (email.present) {
       map['email'] = Variable<String>(email.value);
     }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
     if (isSaveChats.present) {
       map['is_save_chats'] = Variable<bool>(isSaveChats.value);
     }
     if (photoId.present) {
       map['photo_id'] = Variable<int>(photoId.value);
-    }
-    if (language.present) {
-      map['language'] = Variable<String>(language.value);
     }
     return map;
   }
@@ -633,9 +636,9 @@ class UsersCompanion extends UpdateCompanion<User> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('email: $email, ')
+          ..write('description: $description, ')
           ..write('isSaveChats: $isSaveChats, ')
-          ..write('photoId: $photoId, ')
-          ..write('language: $language')
+          ..write('photoId: $photoId')
           ..write(')'))
         .toString();
   }
@@ -2015,6 +2018,311 @@ class FileMessageCompanion extends UpdateCompanion<FileMessageData> {
   }
 }
 
+class $ObjectivesTable extends Objectives
+    with TableInfo<$ObjectivesTable, Objective> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ObjectivesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<int> value = GeneratedColumn<int>(
+      'value', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _descriptionMeta =
+      const VerificationMeta('description');
+  @override
+  late final GeneratedColumn<String> description = GeneratedColumn<String>(
+      'description', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<int> userId = GeneratedColumn<int>(
+      'userId', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES users (id)'));
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumnWithTypeConverter<ObjectiveType, int> type =
+      GeneratedColumn<int>('type', aliasedName, false,
+              type: DriftSqlType.int, requiredDuringInsert: true)
+          .withConverter<ObjectiveType>($ObjectivesTable.$convertertype);
+  @override
+  List<GeneratedColumn> get $columns => [id, value, description, userId, type];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'objectives';
+  @override
+  VerificationContext validateIntegrity(Insertable<Objective> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+          _valueMeta, value.isAcceptableOrUnknown(data['value']!, _valueMeta));
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('description')) {
+      context.handle(
+          _descriptionMeta,
+          description.isAcceptableOrUnknown(
+              data['description']!, _descriptionMeta));
+    } else if (isInserting) {
+      context.missing(_descriptionMeta);
+    }
+    if (data.containsKey('userId')) {
+      context.handle(_userIdMeta,
+          userId.isAcceptableOrUnknown(data['userId']!, _userIdMeta));
+    } else if (isInserting) {
+      context.missing(_userIdMeta);
+    }
+    context.handle(_typeMeta, const VerificationResult.success());
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Objective map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Objective(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      value: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}value'])!,
+      description: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
+      userId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}userId'])!,
+      type: $ObjectivesTable.$convertertype.fromSql(attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}type'])!),
+    );
+  }
+
+  @override
+  $ObjectivesTable createAlias(String alias) {
+    return $ObjectivesTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<ObjectiveType, int, int> $convertertype =
+      const EnumIndexConverter<ObjectiveType>(ObjectiveType.values);
+}
+
+class Objective extends DataClass implements Insertable<Objective> {
+  final int id;
+  final int value;
+  final String description;
+  final int userId;
+  final ObjectiveType type;
+  const Objective(
+      {required this.id,
+      required this.value,
+      required this.description,
+      required this.userId,
+      required this.type});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['value'] = Variable<int>(value);
+    map['description'] = Variable<String>(description);
+    map['userId'] = Variable<int>(userId);
+    {
+      map['type'] = Variable<int>($ObjectivesTable.$convertertype.toSql(type));
+    }
+    return map;
+  }
+
+  ObjectivesCompanion toCompanion(bool nullToAbsent) {
+    return ObjectivesCompanion(
+      id: Value(id),
+      value: Value(value),
+      description: Value(description),
+      userId: Value(userId),
+      type: Value(type),
+    );
+  }
+
+  factory Objective.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Objective(
+      id: serializer.fromJson<int>(json['id']),
+      value: serializer.fromJson<int>(json['value']),
+      description: serializer.fromJson<String>(json['description']),
+      userId: serializer.fromJson<int>(json['userId']),
+      type: $ObjectivesTable.$convertertype
+          .fromJson(serializer.fromJson<int>(json['type'])),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'value': serializer.toJson<int>(value),
+      'description': serializer.toJson<String>(description),
+      'userId': serializer.toJson<int>(userId),
+      'type':
+          serializer.toJson<int>($ObjectivesTable.$convertertype.toJson(type)),
+    };
+  }
+
+  Objective copyWith(
+          {int? id,
+          int? value,
+          String? description,
+          int? userId,
+          ObjectiveType? type}) =>
+      Objective(
+        id: id ?? this.id,
+        value: value ?? this.value,
+        description: description ?? this.description,
+        userId: userId ?? this.userId,
+        type: type ?? this.type,
+      );
+  Objective copyWithCompanion(ObjectivesCompanion data) {
+    return Objective(
+      id: data.id.present ? data.id.value : this.id,
+      value: data.value.present ? data.value.value : this.value,
+      description:
+          data.description.present ? data.description.value : this.description,
+      userId: data.userId.present ? data.userId.value : this.userId,
+      type: data.type.present ? data.type.value : this.type,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Objective(')
+          ..write('id: $id, ')
+          ..write('value: $value, ')
+          ..write('description: $description, ')
+          ..write('userId: $userId, ')
+          ..write('type: $type')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, value, description, userId, type);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Objective &&
+          other.id == this.id &&
+          other.value == this.value &&
+          other.description == this.description &&
+          other.userId == this.userId &&
+          other.type == this.type);
+}
+
+class ObjectivesCompanion extends UpdateCompanion<Objective> {
+  final Value<int> id;
+  final Value<int> value;
+  final Value<String> description;
+  final Value<int> userId;
+  final Value<ObjectiveType> type;
+  const ObjectivesCompanion({
+    this.id = const Value.absent(),
+    this.value = const Value.absent(),
+    this.description = const Value.absent(),
+    this.userId = const Value.absent(),
+    this.type = const Value.absent(),
+  });
+  ObjectivesCompanion.insert({
+    this.id = const Value.absent(),
+    required int value,
+    required String description,
+    required int userId,
+    required ObjectiveType type,
+  })  : value = Value(value),
+        description = Value(description),
+        userId = Value(userId),
+        type = Value(type);
+  static Insertable<Objective> custom({
+    Expression<int>? id,
+    Expression<int>? value,
+    Expression<String>? description,
+    Expression<int>? userId,
+    Expression<int>? type,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (value != null) 'value': value,
+      if (description != null) 'description': description,
+      if (userId != null) 'userId': userId,
+      if (type != null) 'type': type,
+    });
+  }
+
+  ObjectivesCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? value,
+      Value<String>? description,
+      Value<int>? userId,
+      Value<ObjectiveType>? type}) {
+    return ObjectivesCompanion(
+      id: id ?? this.id,
+      value: value ?? this.value,
+      description: description ?? this.description,
+      userId: userId ?? this.userId,
+      type: type ?? this.type,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<int>(value.value);
+    }
+    if (description.present) {
+      map['description'] = Variable<String>(description.value);
+    }
+    if (userId.present) {
+      map['userId'] = Variable<int>(userId.value);
+    }
+    if (type.present) {
+      map['type'] =
+          Variable<int>($ObjectivesTable.$convertertype.toSql(type.value));
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ObjectivesCompanion(')
+          ..write('id: $id, ')
+          ..write('value: $value, ')
+          ..write('description: $description, ')
+          ..write('userId: $userId, ')
+          ..write('type: $type')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2025,12 +2333,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MessagesTable messages = $MessagesTable(this);
   late final $CategoryChatTable categoryChat = $CategoryChatTable(this);
   late final $FileMessageTable fileMessage = $FileMessageTable(this);
+  late final $ObjectivesTable objectives = $ObjectivesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities =>
-      [filesdb, users, categories, chats, messages, categoryChat, fileMessage];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        filesdb,
+        users,
+        categories,
+        chats,
+        messages,
+        categoryChat,
+        fileMessage,
+        objectives
+      ];
 }
 
 typedef $$FilesdbTableCreateCompanionBuilder = FilesdbCompanion Function({
@@ -2279,17 +2596,17 @@ typedef $$UsersTableCreateCompanionBuilder = UsersCompanion Function({
   Value<int> id,
   required String name,
   required String email,
+  required String description,
   Value<bool> isSaveChats,
   Value<int?> photoId,
-  required String language,
 });
 typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
   Value<int> id,
   Value<String> name,
   Value<String> email,
+  Value<String> description,
   Value<bool> isSaveChats,
   Value<int?> photoId,
-  Value<String> language,
 });
 
 final class $$UsersTableReferences
@@ -2322,6 +2639,20 @@ final class $$UsersTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$ObjectivesTable, List<Objective>>
+      _objectivesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+          db.objectives,
+          aliasName: $_aliasNameGenerator(db.users.id, db.objectives.userId));
+
+  $$ObjectivesTableProcessedTableManager get objectivesRefs {
+    final manager = $$ObjectivesTableTableManager($_db, $_db.objectives)
+        .filter((f) => f.userId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_objectivesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
@@ -2341,11 +2672,11 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
   ColumnFilters<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<bool> get isSaveChats => $composableBuilder(
       column: $table.isSaveChats, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get language => $composableBuilder(
-      column: $table.language, builder: (column) => ColumnFilters(column));
 
   $$FilesdbTableFilterComposer get photoId {
     final $$FilesdbTableFilterComposer composer = $composerBuilder(
@@ -2387,6 +2718,27 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
             ));
     return f(composer);
   }
+
+  Expression<bool> objectivesRefs(
+      Expression<bool> Function($$ObjectivesTableFilterComposer f) f) {
+    final $$ObjectivesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.objectives,
+        getReferencedColumn: (t) => t.userId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ObjectivesTableFilterComposer(
+              $db: $db,
+              $table: $db.objectives,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$UsersTableOrderingComposer
@@ -2407,11 +2759,11 @@ class $$UsersTableOrderingComposer
   ColumnOrderings<String> get email => $composableBuilder(
       column: $table.email, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<bool> get isSaveChats => $composableBuilder(
       column: $table.isSaveChats, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get language => $composableBuilder(
-      column: $table.language, builder: (column) => ColumnOrderings(column));
 
   $$FilesdbTableOrderingComposer get photoId {
     final $$FilesdbTableOrderingComposer composer = $composerBuilder(
@@ -2452,11 +2804,11 @@ class $$UsersTableAnnotationComposer
   GeneratedColumn<String> get email =>
       $composableBuilder(column: $table.email, builder: (column) => column);
 
+  GeneratedColumn<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => column);
+
   GeneratedColumn<bool> get isSaveChats => $composableBuilder(
       column: $table.isSaveChats, builder: (column) => column);
-
-  GeneratedColumn<String> get language =>
-      $composableBuilder(column: $table.language, builder: (column) => column);
 
   $$FilesdbTableAnnotationComposer get photoId {
     final $$FilesdbTableAnnotationComposer composer = $composerBuilder(
@@ -2498,6 +2850,27 @@ class $$UsersTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> objectivesRefs<T extends Object>(
+      Expression<T> Function($$ObjectivesTableAnnotationComposer a) f) {
+    final $$ObjectivesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.objectives,
+        getReferencedColumn: (t) => t.userId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ObjectivesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.objectives,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$UsersTableTableManager extends RootTableManager<
@@ -2511,7 +2884,8 @@ class $$UsersTableTableManager extends RootTableManager<
     $$UsersTableUpdateCompanionBuilder,
     (User, $$UsersTableReferences),
     User,
-    PrefetchHooks Function({bool photoId, bool chatsRefs})> {
+    PrefetchHooks Function(
+        {bool photoId, bool chatsRefs, bool objectivesRefs})> {
   $$UsersTableTableManager(_$AppDatabase db, $UsersTable table)
       : super(TableManagerState(
           db: db,
@@ -2526,42 +2900,46 @@ class $$UsersTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
             Value<String> email = const Value.absent(),
+            Value<String> description = const Value.absent(),
             Value<bool> isSaveChats = const Value.absent(),
             Value<int?> photoId = const Value.absent(),
-            Value<String> language = const Value.absent(),
           }) =>
               UsersCompanion(
             id: id,
             name: name,
             email: email,
+            description: description,
             isSaveChats: isSaveChats,
             photoId: photoId,
-            language: language,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String name,
             required String email,
+            required String description,
             Value<bool> isSaveChats = const Value.absent(),
             Value<int?> photoId = const Value.absent(),
-            required String language,
           }) =>
               UsersCompanion.insert(
             id: id,
             name: name,
             email: email,
+            description: description,
             isSaveChats: isSaveChats,
             photoId: photoId,
-            language: language,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
                   (e.readTable(table), $$UsersTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({photoId = false, chatsRefs = false}) {
+          prefetchHooksCallback: (
+              {photoId = false, chatsRefs = false, objectivesRefs = false}) {
             return PrefetchHooks(
               db: db,
-              explicitlyWatchedTables: [if (chatsRefs) db.chats],
+              explicitlyWatchedTables: [
+                if (chatsRefs) db.chats,
+                if (objectivesRefs) db.objectives
+              ],
               addJoins: <
                   T extends TableManagerState<
                       dynamic,
@@ -2599,6 +2977,18 @@ class $$UsersTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.userId == item.id),
+                        typedResults: items),
+                  if (objectivesRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$UsersTableReferences._objectivesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$UsersTableReferences(db, table, p0)
+                                .objectivesRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.userId == item.id),
                         typedResults: items)
                 ];
               },
@@ -2618,7 +3008,8 @@ typedef $$UsersTableProcessedTableManager = ProcessedTableManager<
     $$UsersTableUpdateCompanionBuilder,
     (User, $$UsersTableReferences),
     User,
-    PrefetchHooks Function({bool photoId, bool chatsRefs})>;
+    PrefetchHooks Function(
+        {bool photoId, bool chatsRefs, bool objectivesRefs})>;
 typedef $$CategoriesTableCreateCompanionBuilder = CategoriesCompanion Function({
   Value<int> id,
   required String name,
@@ -4163,6 +4554,272 @@ typedef $$FileMessageTableProcessedTableManager = ProcessedTableManager<
     (FileMessageData, $$FileMessageTableReferences),
     FileMessageData,
     PrefetchHooks Function({bool messageId})>;
+typedef $$ObjectivesTableCreateCompanionBuilder = ObjectivesCompanion Function({
+  Value<int> id,
+  required int value,
+  required String description,
+  required int userId,
+  required ObjectiveType type,
+});
+typedef $$ObjectivesTableUpdateCompanionBuilder = ObjectivesCompanion Function({
+  Value<int> id,
+  Value<int> value,
+  Value<String> description,
+  Value<int> userId,
+  Value<ObjectiveType> type,
+});
+
+final class $$ObjectivesTableReferences
+    extends BaseReferences<_$AppDatabase, $ObjectivesTable, Objective> {
+  $$ObjectivesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $UsersTable _userIdTable(_$AppDatabase db) => db.users
+      .createAlias($_aliasNameGenerator(db.objectives.userId, db.users.id));
+
+  $$UsersTableProcessedTableManager get userId {
+    final manager = $$UsersTableTableManager($_db, $_db.users)
+        .filter((f) => f.id($_item.userId));
+    final item = $_typedResult.readTableOrNull(_userIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$ObjectivesTableFilterComposer
+    extends Composer<_$AppDatabase, $ObjectivesTable> {
+  $$ObjectivesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get value => $composableBuilder(
+      column: $table.value, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<ObjectiveType, ObjectiveType, int> get type =>
+      $composableBuilder(
+          column: $table.type,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  $$UsersTableFilterComposer get userId {
+    final $$UsersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.userId,
+        referencedTable: $db.users,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$UsersTableFilterComposer(
+              $db: $db,
+              $table: $db.users,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$ObjectivesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ObjectivesTable> {
+  $$ObjectivesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get value => $composableBuilder(
+      column: $table.value, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  $$UsersTableOrderingComposer get userId {
+    final $$UsersTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.userId,
+        referencedTable: $db.users,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$UsersTableOrderingComposer(
+              $db: $db,
+              $table: $db.users,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$ObjectivesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ObjectivesTable> {
+  $$ObjectivesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<String> get description => $composableBuilder(
+      column: $table.description, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<ObjectiveType, int> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  $$UsersTableAnnotationComposer get userId {
+    final $$UsersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.userId,
+        referencedTable: $db.users,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$UsersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.users,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$ObjectivesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ObjectivesTable,
+    Objective,
+    $$ObjectivesTableFilterComposer,
+    $$ObjectivesTableOrderingComposer,
+    $$ObjectivesTableAnnotationComposer,
+    $$ObjectivesTableCreateCompanionBuilder,
+    $$ObjectivesTableUpdateCompanionBuilder,
+    (Objective, $$ObjectivesTableReferences),
+    Objective,
+    PrefetchHooks Function({bool userId})> {
+  $$ObjectivesTableTableManager(_$AppDatabase db, $ObjectivesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ObjectivesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ObjectivesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ObjectivesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> value = const Value.absent(),
+            Value<String> description = const Value.absent(),
+            Value<int> userId = const Value.absent(),
+            Value<ObjectiveType> type = const Value.absent(),
+          }) =>
+              ObjectivesCompanion(
+            id: id,
+            value: value,
+            description: description,
+            userId: userId,
+            type: type,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int value,
+            required String description,
+            required int userId,
+            required ObjectiveType type,
+          }) =>
+              ObjectivesCompanion.insert(
+            id: id,
+            value: value,
+            description: description,
+            userId: userId,
+            type: type,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$ObjectivesTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({userId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (userId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.userId,
+                    referencedTable:
+                        $$ObjectivesTableReferences._userIdTable(db),
+                    referencedColumn:
+                        $$ObjectivesTableReferences._userIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$ObjectivesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ObjectivesTable,
+    Objective,
+    $$ObjectivesTableFilterComposer,
+    $$ObjectivesTableOrderingComposer,
+    $$ObjectivesTableAnnotationComposer,
+    $$ObjectivesTableCreateCompanionBuilder,
+    $$ObjectivesTableUpdateCompanionBuilder,
+    (Objective, $$ObjectivesTableReferences),
+    Objective,
+    PrefetchHooks Function({bool userId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4181,4 +4838,6 @@ class $AppDatabaseManager {
       $$CategoryChatTableTableManager(_db, _db.categoryChat);
   $$FileMessageTableTableManager get fileMessage =>
       $$FileMessageTableTableManager(_db, _db.fileMessage);
+  $$ObjectivesTableTableManager get objectives =>
+      $$ObjectivesTableTableManager(_db, _db.objectives);
 }
