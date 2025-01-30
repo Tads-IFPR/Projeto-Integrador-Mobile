@@ -11,6 +11,7 @@ import 'package:laboratorio/screens/profile.dart';
 import 'package:laboratorio/services/openAIService.dart';
 import 'package:laboratorio/screens/configuration.dart';
 import 'package:laboratorio/screens/metrics.dart';
+import 'package:laboratorio/styles/default.dart';
 
 void main() {
   runApp(const App());
@@ -45,8 +46,6 @@ class _AppState extends State<App> {
     super.initState();
     _checkInitialScreen();
   }
-
-
 
   void _onItemTapped(int index) {
     if (index == 0) {
@@ -121,11 +120,13 @@ class _AppState extends State<App> {
         useMaterial3: true,
       ),
       home: Scaffold(
-        body: pages[_selectedIndex],
-        bottomNavigationBar: BottomNavigator(
+        body: pages.asMap().containsKey(_selectedIndex) 
+          ? pages[_selectedIndex]
+          : const Center(child: CircularProgressIndicator(color: colorPrimary)),
+        bottomNavigationBar: pages.length > 1 ? BottomNavigator(
           onItemTapped: _onItemTapped,
           selectedIndex: _selectedIndex,
-        ),
+        ) : null,
       )
     );
   }
