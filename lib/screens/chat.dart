@@ -6,10 +6,12 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:laboratorio/components/chat/filePreview/filePreview.dart';
 import 'package:laboratorio/dao/chat.dart';
 import 'package:laboratorio/main.dart';
+import 'package:laboratorio/styles/default.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:laboratorio/components/chat/message.dart';
+import 'package:laboratorio/components/chat/suggestions/suggestion.dart';
 import 'package:laboratorio/components/chat/textBar.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -38,8 +40,8 @@ class _ChatState extends State<ChatScreen> {
     });
   } 
 
-  void _sendMessage() async {
-    final userInput = _controller.text;
+  _sendMessage(String? input) async {
+    final userInput = input ?? _controller.text;
     if (userInput.isEmpty) return;
     toggleLoading();
     _controller.clear();
@@ -180,25 +182,28 @@ class _ChatState extends State<ChatScreen> {
             // Expanded widget for the messages
             Expanded(
               child: _isLoading
-              ? const Center(child: CircularProgressIndicator(),)
-              : Container(
-                padding: const EdgeInsetsDirectional.only(
-                  start: 16,
-                  end: 16,
-                  top: 8,
-                  bottom: 8,
-                ),
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: messages.length,
-                  reverse: false,
-                  itemBuilder: (context, index) {
-                    return messages[index];
-                  },
+              ? const Center(child: CircularProgressIndicator(color: colorPrimary))
+              : (
+                messages.length > 0
+                ? Container(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: 16,
+                    end: 16,
+                    top: 8,
+                    bottom: 8,
+                  ),
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: messages.length,
+                    reverse: false,
+                    itemBuilder: (context, index) {
+                      return messages[index];
+                    },
+                  )
                 )
+                : Center(child: Suggestion(sendMessage: _sendMessage))
               ),
             ),
-            // Text bar and attachments
             Column(
               children: [
                 Container(

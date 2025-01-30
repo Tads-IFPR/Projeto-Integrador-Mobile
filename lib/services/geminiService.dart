@@ -172,6 +172,72 @@ class Geminiservice {
     }
   }
 
+  Future<List<Map<String, String>>> getSuggestions(List<String> themes) async {
+    final url = Uri.parse('$_baseUrl/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey');
+    final headers = {
+      'Content-Type': 'application/json',
+    };
+
+    final messages = [
+      {
+        'text': 'Você é um assistente que sugere ideias para chats baseados em temas fornecidos.'
+      },
+      {
+        'text': 'Sugira chats baseados nos seguintes temas: ${themes.join(", ")}. A quantidade de sugestões deve ser igual a quantidade de temas.'
+      }
+    ];
+
+    final body = jsonEncode({
+      "system_instruction": {
+        "parts": [
+          {"text": "Não responda com caracteres específicos de markdown."},
+        ]
+      },
+      'contents': {
+        'parts': messages,
+      },
+      "generationConfig": {
+        "response_mime_type": "application/json",
+        "response_schema": {
+          "type": "ARRAY",
+          "items": {
+            "type": "OBJECT",
+            "properties": {
+              "title": {"type": "STRING"},
+              "message": {"type": "STRING"}
+            }
+          }
+        }
+      }
+    });
+
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final suggestionsData = responseData['candidates'][0]['content']['parts'][0]['text'];
+
+        List<dynamic> suggestionsList = jsonDecode(suggestionsData);
+
+        var index = 0;
+        return themes.map((theme) {
+          final suggestion = suggestionsList[index];
+          return {
+            'title': suggestion['title'] is String ? suggestion['title'] as String : 'Suggestion ${index++}',
+            'message': suggestion['message'] is String ? suggestion['message'] as String : 'No message',
+          };
+        }).toList().cast<Map<String, String>>();
+      } else {
+        print('Error: ${response.statusCode}, ${response.body}');
+        throw Exception('Failed to get suggestions');
+      }
+    } catch (e) {
+      print('Exception occurred: $e');
+      rethrow;
+    }
+  }
+
   // not implemented
   Future<File?> textToSpeach(String input, {String model = 'tts-1', String voice = 'alloy'}) async {
     return null;
