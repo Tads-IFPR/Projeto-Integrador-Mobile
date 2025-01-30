@@ -218,16 +218,16 @@ class Geminiservice {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
         final suggestionsData = responseData['candidates'][0]['content']['parts'][0]['text'];
 
-        List<Map<String, String>> suggestionsList = jsonDecode(suggestionsData);
+        List<dynamic> suggestionsList = jsonDecode(suggestionsData);
 
         var index = 0;
         return themes.map((theme) {
           final suggestion = suggestionsList[index];
           return {
-            'title': suggestion['title'] ?? 'Suggestion ${index++}',
-            'message': suggestion['message'] ?? 'No message',
+            'title': suggestion['title'] is String ? suggestion['title'] as String : 'Suggestion ${index++}',
+            'message': suggestion['message'] is String ? suggestion['message'] as String : 'No message',
           };
-        }).toList();
+        }).toList().cast<Map<String, String>>();
       } else {
         print('Error: ${response.statusCode}, ${response.body}');
         throw Exception('Failed to get suggestions');
