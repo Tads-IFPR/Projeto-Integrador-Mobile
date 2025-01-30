@@ -16,6 +16,7 @@ class Suggestion extends StatefulWidget {
 }
 
 class _SuggestionState extends State<Suggestion> {
+  bool isLoading = false;
   List<String> categories = [];
   List<Map<String, String>> categoriesSuggestions = [];
 
@@ -24,18 +25,20 @@ class _SuggestionState extends State<Suggestion> {
     categoriesSuggestions = await chatController.getSuggestions(categories);
     setState(() {
       categoriesSuggestions;
+      isLoading = false;
     });
   }
 
   @override
   void initState() {
     super.initState();
+    isLoading = true;
     getSuggestions();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
+    return !isLoading ? GridView.builder(
       padding: const EdgeInsets.all(8),
       shrinkWrap: true,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -57,6 +60,8 @@ class _SuggestionState extends State<Suggestion> {
           ),
         );
       },
+    ) : const CircularProgressIndicator(
+      color: colorPrimary,
     );
   }
 }
