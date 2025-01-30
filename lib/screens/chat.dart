@@ -6,6 +6,7 @@ import 'package:flutter_sound/flutter_sound.dart';
 import 'package:laboratorio/components/chat/filePreview/filePreview.dart';
 import 'package:laboratorio/dao/chat.dart';
 import 'package:laboratorio/main.dart';
+import 'package:laboratorio/styles/default.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -181,7 +182,7 @@ class _ChatState extends State<ChatScreen> {
             // Expanded widget for the messages
             Expanded(
               child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const Center(child: CircularProgressIndicator(color: colorPrimary))
               : (
                 messages.length > 0
                 ? Container(
