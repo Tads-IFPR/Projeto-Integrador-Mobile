@@ -48,7 +48,7 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
 
   Future<Map<String, int>> _fetchChatCountsByCategory() async {
     final query = db.customSelect(
-      'SELECT categories.name AS category_name, COUNT(chats.id) AS chat_count '
+      'SELECT LOWER(categories.name) AS category_name, COUNT(chats.id) AS chat_count '
           'FROM categories '
           'LEFT JOIN category_chat ON categories.id = category_chat.category_id '
           'LEFT JOIN chats ON category_chat.chat_id = chats.id '
@@ -185,12 +185,19 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
                         children: [
                           IconButton(
                             icon: Icon(Icons.edit),
-                            onPressed: () {
-                              Navigator.push(
+                            onPressed: () async {
+                              final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => AddObjectiveScreen(objective: ObjectiveData(objective.id, objective.objectiveValue, objective.description, objective.type)),                                ),
+                                  builder: (context) => AddObjectiveScreen(objective: ObjectiveData(objective.id, objective.objectiveValue, objective.description, objective.type)),
+                                ),
                               );
+
+                              if (result == true) {
+                                setState(() {
+                                  _dataFuture = _generateChartData();
+                                });
+                              }
                             },
                           ),
                           IconButton(
@@ -241,11 +248,17 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
         selectedIndex: _selectedIndex,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => AddObjectiveScreen()),
           );
+
+          if (result == true) {
+            setState(() {
+              _dataFuture = _generateChartData();
+            });
+          }
         },
         child: const Icon(Icons.add),
       ),

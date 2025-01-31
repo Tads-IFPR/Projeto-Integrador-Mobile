@@ -75,15 +75,12 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
         const SnackBar(content: Text('Objective saved successfully')),
       );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const UserMetricsScreen()),
-      );
+      Navigator.pop(context, true);
     }
   }
 
   void _onItemTapped(int index) {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => MainScreen(initialIndex: index)),
     );
