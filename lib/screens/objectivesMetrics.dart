@@ -48,7 +48,7 @@ class _UserMetricsScreenState extends State<UserMetricsScreen> {
 
   Future<Map<String, int>> _fetchChatCountsByCategory() async {
     final query = db.customSelect(
-      'SELECT LOWER(categories.name) AS category_name, COUNT(chats.id) AS chat_count '
+      'SELECT categories.name AS category_name, COUNT(chats.id) AS chat_count '
           'FROM categories '
           'LEFT JOIN category_chat ON categories.id = category_chat.category_id '
           'LEFT JOIN chats ON category_chat.chat_id = chats.id '
