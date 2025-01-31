@@ -14,4 +14,4 @@ class UserDAO extends AppDatabase {
   User? get currentUser => _currentUser;
 }
 
-UserDAO chatDAO = UserDAO();
+UserDAO userDAO = UserDAO();
