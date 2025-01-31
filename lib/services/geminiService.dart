@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:laboratorio/dao/chat.dart';
 
 const loremIpsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In sit amet suscipit ligula, nec elementum lorem. Phasellus volutpat sollicitudin lacus, quis pulvinar lectus aliquet nec. Nam vulputate nulla quis imperdiet vulputate. Aenean consequat, risus sed pellentesque convallis, urna ipsum tincidunt nisi, sit amet sagittis magna justo in purus. Aliquam efficitur, nunc eget interdum tincidunt, justo erat fermentum felis, eget consequat orci nulla mattis purus. Cras mollis pellentesque vulputate. Etiam a ligula a turpis placerat pharetra suscipit vel quam. Duis volutpat ultrices libero. Nunc congue nisi id quam vehicula eleifend at ut est. Pellentesque laoreet justo vitae mi rhoncus, id eleifend ante consequat.';
 
@@ -18,12 +19,39 @@ class Geminiservice {
       'Content-Type': 'application/json',
     };
 
-    List<dynamic> messages = [];
+    List<dynamic> contents = [];
+
+    for (final message in chatDAO.chatMessages) {
+      final role = !message.isBot ? 'user' : 'model';
+
+      contents.add({
+        "role": role,
+        "parts": [
+          {
+            "text": message.messageText,
+          }
+        ]
+      });
+    }
 
     if (prompt != null) {
-      messages.add({'text': prompt});
+      contents.add({
+        "role": "user",
+        "parts": [
+          {
+            "text": prompt,
+          }
+        ]
+      });
     } else {
-      messages.add({'text': 'Responda o áudio e/ou descreva as imagens.'});
+      contents.add({
+        "role": "user",
+        "parts": [
+          {
+            "text": "Responda o áudio e/ou descreva as imagens."
+          }
+        ]
+      });
     }
 
     if (files.isNotEmpty) {
@@ -33,21 +61,31 @@ class Geminiservice {
         Uint8List? imageBytes = file.readAsBytesSync();
 
         final base64 = base64Encode(imageBytes.toList());
-        messages.add({
-          'inline_data': {
-            "mime_type":"image/jpeg",
-             "data": base64
-          }
+        contents.add({
+          "role": "user",
+          "parts": [
+            {
+              "inline_data": {
+                "mime_type": "image/jpeg",
+                "data": base64,
+              }
+            }
+          ]
         });
       }
     }
 
     if (fileUrl != null) {
-      messages.add({
-        "file_data":{
-          "mime_type": "audio/mp3",
-          "file_uri": fileUrl
-        }
+      contents.add({
+        "role": "user",
+        "parts": [
+          {
+            "file_data": {
+              "mime_type": "audio/mp3",
+              "file_uri": fileUrl,
+            }
+          }
+        ]
       });
     }
 
@@ -65,9 +103,7 @@ class Geminiservice {
           },
         ]
       },
-      'contents': {
-        'parts': messages,
-      },
+      'contents': contents,
       "generationConfig": {
         "response_mime_type": "application/json",
         "response_schema": {
@@ -223,6 +259,7 @@ class Geminiservice {
         var index = 0;
         return themes.map((theme) {
           final suggestion = suggestionsList[index];
+          index++;
           return {
             'title': suggestion['title'] is String ? suggestion['title'] as String : 'Suggestion ${index++}',
             'message': suggestion['message'] is String ? suggestion['message'] as String : 'No message',

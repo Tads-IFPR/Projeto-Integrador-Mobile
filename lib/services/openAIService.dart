@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:laboratorio/dao/chat.dart';
 
 const loremIpsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In sit amet suscipit ligula, nec elementum lorem. Phasellus volutpat sollicitudin lacus, quis pulvinar lectus aliquet nec. Nam vulputate nulla quis imperdiet vulputate. Aenean consequat, risus sed pellentesque convallis, urna ipsum tincidunt nisi, sit amet sagittis magna justo in purus. Aliquam efficitur, nunc eget interdum tincidunt, justo erat fermentum felis, eget consequat orci nulla mattis purus. Cras mollis pellentesque vulputate. Etiam a ligula a turpis placerat pharetra suscipit vel quam. Duis volutpat ultrices libero. Nunc congue nisi id quam vehicula eleifend at ut est. Pellentesque laoreet justo vitae mi rhoncus, id eleifend ante consequat.';
 
@@ -13,7 +14,7 @@ class OpenAIService {
   final String _baseUrl = 'https://api.openai.com/v1';
 
   Future<Map<String, dynamic>> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
-    // throw Exception('Internal test');
+    throw Exception('Internal test');
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
@@ -25,6 +26,10 @@ class OpenAIService {
       {'role': 'system', 'content': 'Não responda com caracteres específicos de markdown'},
       {'role': 'system', 'content': 'As categorias da conversa devem ser relacionadas a tecnologia, exemplo: CSS, JS, HTML, PHP, POO, etc.'},
     ];
+
+    for (final message in chatDAO.chatMessages) {
+      messages.add({'role': message.isBot ? 'assistant' : 'user', 'content': message.messageText});
+    }
 
     if (files.isNotEmpty) {
       List<Map<String, dynamic>> content = [
@@ -157,7 +162,7 @@ class OpenAIService {
   }
 
   Future<List<Map<String, String>>> getSuggestions(List<String> themes, {String model = 'gpt-4o-mini'}) async {
-    // throw Exception('Internal test');
+    throw Exception('Internal test');
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
