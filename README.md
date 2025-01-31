@@ -1,16 +1,38 @@
-# laboratorio
+📱 JAJA
 
-A new Flutter project.
+🚀 Tecnologias Utilizadas
 
-## Getting Started
+Este projeto foi desenvolvido com as seguintes tecnologias:
 
-This project is a starting point for a Flutter application.
+Flutter
 
-A few resources to get you started if this is your first Flutter project:
+Dart
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+SQLite
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+📦 Instalação
+
+Para rodar este projeto localmente, siga os passos abaixo:
+
+Instale o Dart e Flutter.
+
+Clone este repositório:
+
+- git clone https://github.com/Tads-IFPR/Projeto-Integrador-Mobile
+
+Acesse o diretório do projeto:
+
+- cd Projeto-Integrador-Mobile
+
+Instale as dependências:
+
+- flutter pub get
+- flutter pub run build_runner build
+
+Execute o aplicativo:
+
+- flutter run
+
+🛠 Configuração Adicional
+
+Para conectar nas API's de IA será necessário utilizar um token da OpenAI e/ou do Google Gemini. Os tokens devem ser inseridos no arquivo main.dart nas linhas 20 e 21 respectivamente.
