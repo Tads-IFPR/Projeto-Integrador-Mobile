@@ -77,7 +77,7 @@ class _AddObjectiveScreenState extends State<AddObjectiveScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const MainScreen(initialIndex: 3)),
+        MaterialPageRoute(builder: (context) => const UserMetricsScreen()),
       );
     }
   }
