@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:drift/drift.dart';
-import 'package:laboratorio/database/database.dart';
+import 'package:JAJA/database/database.dart';
 
 class ChatDAO extends AppDatabase {
   Chat? _currentChat;

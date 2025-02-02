@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:laboratorio/schemas/messages.dart';
+import 'package:JAJA/schemas/messages.dart';
 
 class FileMessage extends Table {
   IntColumn get id => integer().autoIncrement()();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:laboratorio/styles/default.dart';
+import 'package:JAJA/styles/default.dart';
 
 class ChatCard extends StatelessWidget {
   final String text;

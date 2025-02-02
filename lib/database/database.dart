@@ -2,17 +2,17 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:laboratorio/schemas/objectives.dart';
+import 'package:JAJA/schemas/objectives.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:laboratorio/schemas/users.dart';
-import 'package:laboratorio/schemas/categories.dart';
-import 'package:laboratorio/schemas/chats.dart';
-import 'package:laboratorio/schemas/messages.dart';
-import 'package:laboratorio/schemas/files.dart';
-import 'package:laboratorio/schemas/category_chat.dart';
-import 'package:laboratorio/schemas/file_message.dart';
-import 'package:laboratorio/schemas/objectives.dart';
+import 'package:JAJA/schemas/users.dart';
+import 'package:JAJA/schemas/categories.dart';
+import 'package:JAJA/schemas/chats.dart';
+import 'package:JAJA/schemas/messages.dart';
+import 'package:JAJA/schemas/files.dart';
+import 'package:JAJA/schemas/category_chat.dart';
+import 'package:JAJA/schemas/file_message.dart';
+import 'package:JAJA/schemas/objectives.dart';
 part 'database.g.dart';
 
 LazyDatabase _openConnection() {

@@ -1,4 +1,4 @@
-import 'package:laboratorio/database/database.dart';
+import 'package:JAJA/database/database.dart';
 
 class UserDAO extends AppDatabase {
   User? _currentUser;

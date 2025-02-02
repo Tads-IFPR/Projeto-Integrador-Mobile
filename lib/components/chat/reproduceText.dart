@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:laboratorio/main.dart';
+import 'package:JAJA/main.dart';
 
 class Reproducetext extends StatefulWidget {
   final String text;

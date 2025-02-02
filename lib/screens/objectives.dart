@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' hide Column;
-import 'package:laboratorio/database/database.dart';
-import 'package:laboratorio/schemas/objectives.dart';
-import 'package:laboratorio/components/bottomNavigator.dart';
-import 'package:laboratorio/screens/mainScreen.dart';
+import 'package:JAJA/database/database.dart';
+import 'package:JAJA/schemas/objectives.dart';
+import 'package:JAJA/components/bottomNavigator.dart';
+import 'package:JAJA/screens/mainScreen.dart';
 
 import 'objectivesMetrics.dart';
 

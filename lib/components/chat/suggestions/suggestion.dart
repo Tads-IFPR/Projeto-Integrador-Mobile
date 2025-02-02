@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:laboratorio/components/chat/suggestions/card.dart';
-import 'package:laboratorio/dao/categories.dart';
-import 'package:laboratorio/main.dart';
-import 'package:laboratorio/styles/default.dart';
+import 'package:JAJA/components/chat/suggestions/card.dart';
+import 'package:JAJA/dao/categories.dart';
+import 'package:JAJA/main.dart';
+import 'package:JAJA/styles/default.dart';
 
 class Suggestion extends StatefulWidget {
   final Function(String?) sendMessage;

@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
-import 'package:laboratorio/database/database.dart';
+import 'package:JAJA/database/database.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:laboratorio/main.dart';
+import 'package:JAJA/main.dart';
 
 import 'chat.dart';
 

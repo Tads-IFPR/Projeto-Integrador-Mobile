@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter/material.dart';
-import 'package:laboratorio/styles/default.dart';
+import 'package:JAJA/styles/default.dart';
 
 class Player extends StatefulWidget {
   final File audioFile;

@@ -1,5 +1,5 @@
 import '../database/database.dart';
-import 'package:laboratorio/dao/chat.dart';
+import 'package:JAJA/dao/chat.dart';
 
 Future<void> deleteUserAndRelatedData(AppDatabase db) async {
   final lastUser = await _getLastUser();

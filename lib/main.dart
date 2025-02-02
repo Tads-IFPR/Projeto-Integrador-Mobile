@@ -1,17 +1,17 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
-import 'package:laboratorio/controllers/chatController.dart';
-import 'package:laboratorio/dao/chat.dart';
-import 'package:laboratorio/database/database.dart';
-import 'package:laboratorio/screens/chat.dart';
-import 'package:laboratorio/components/bottomNavigator.dart';
-import 'package:laboratorio/screens/history.dart';
-import 'package:laboratorio/services/geminiService.dart';
-import 'package:laboratorio/screens/profile.dart';
-import 'package:laboratorio/services/openAIService.dart';
-import 'package:laboratorio/screens/configuration.dart';
-import 'package:laboratorio/screens/metrics.dart';
-import 'package:laboratorio/styles/default.dart';
+import 'package:JAJA/controllers/chatController.dart';
+import 'package:JAJA/dao/chat.dart';
+import 'package:JAJA/database/database.dart';
+import 'package:JAJA/screens/chat.dart';
+import 'package:JAJA/components/bottomNavigator.dart';
+import 'package:JAJA/screens/history.dart';
+import 'package:JAJA/services/geminiService.dart';
+import 'package:JAJA/screens/profile.dart';
+import 'package:JAJA/services/openAIService.dart';
+import 'package:JAJA/screens/configuration.dart';
+import 'package:JAJA/screens/metrics.dart';
+import 'package:JAJA/styles/default.dart';
 
 void main() {
   runApp(const App());

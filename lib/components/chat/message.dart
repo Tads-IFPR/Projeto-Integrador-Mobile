@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:laboratorio/components/chat/copy.dart';
-import 'package:laboratorio/components/chat/filePreview/filePreview.dart';
-import 'package:laboratorio/components/chat/player.dart';
-// import 'package:laboratorio/components/chat/reproduceText.dart';
+import 'package:JAJA/components/chat/copy.dart';
+import 'package:JAJA/components/chat/filePreview/filePreview.dart';
+import 'package:JAJA/components/chat/player.dart';
+// import 'package:JAJA/components/chat/reproduceText.dart';
 
 const _colorWhite = Color.fromRGBO(255, 252, 255, 1);
 const _colorDark = Color.fromRGBO(80, 81, 79, 1);

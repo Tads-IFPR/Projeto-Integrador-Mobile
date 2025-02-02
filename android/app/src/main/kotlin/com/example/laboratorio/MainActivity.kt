@@ -1,4 +1,4 @@
-package com.example.laboratorio
+package com.example.JAJA
 
 import io.flutter.embedding.android.FlutterActivity
 

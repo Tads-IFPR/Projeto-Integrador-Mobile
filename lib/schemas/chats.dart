@@ -1,5 +1,5 @@
 import 'package:drift/drift.dart';
-import 'package:laboratorio/schemas/users.dart';
+import 'package:JAJA/schemas/users.dart';
 
 class Chats extends Table {
   IntColumn get id => integer().autoIncrement()();

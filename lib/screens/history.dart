@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:laboratorio/components/history/chatCard.dart';
-import 'package:laboratorio/components/history/filter.dart';
-import 'package:laboratorio/dao/categories.dart';
-import 'package:laboratorio/dao/chat.dart';
-import 'package:laboratorio/database/database.dart';
+import 'package:JAJA/components/history/chatCard.dart';
+import 'package:JAJA/components/history/filter.dart';
+import 'package:JAJA/dao/categories.dart';
+import 'package:JAJA/dao/chat.dart';
+import 'package:JAJA/database/database.dart';
 
 class History extends StatefulWidget {
   final Function onChatTap;

@@ -1,11 +1,11 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
-import 'package:laboratorio/components/bottomNavigator.dart';
-import 'package:laboratorio/screens/chat.dart';
-import 'package:laboratorio/screens/history.dart';
-import 'package:laboratorio/screens/profile.dart';
-import 'package:laboratorio/screens/metrics.dart';
-import 'package:laboratorio/screens/objectives.dart';
+import 'package:JAJA/components/bottomNavigator.dart';
+import 'package:JAJA/screens/chat.dart';
+import 'package:JAJA/screens/history.dart';
+import 'package:JAJA/screens/profile.dart';
+import 'package:JAJA/screens/metrics.dart';
+import 'package:JAJA/screens/objectives.dart';
 
 import '../dao/chat.dart';
 import '../database/database.dart';

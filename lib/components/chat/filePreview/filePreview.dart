@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:laboratorio/components/chat/filePreview/TextFilePreview.dart';
-import 'package:laboratorio/components/chat/filePreview/imagePreview.dart';
-import 'package:laboratorio/components/chat/filePreview/unsupportedFilePreview.dart';
-import 'package:laboratorio/styles/default.dart';
+import 'package:JAJA/components/chat/filePreview/TextFilePreview.dart';
+import 'package:JAJA/components/chat/filePreview/imagePreview.dart';
+import 'package:JAJA/components/chat/filePreview/unsupportedFilePreview.dart';
+import 'package:JAJA/styles/default.dart';
 
 class FilePreview extends StatelessWidget {
   final File file;

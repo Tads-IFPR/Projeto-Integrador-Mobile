@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:laboratorio/database/database.dart';
+import 'package:JAJA/database/database.dart';
 
 class Filter extends StatelessWidget {
   final List<Category> filters;

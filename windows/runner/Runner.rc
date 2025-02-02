@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "laboratorio" "\0"
+            VALUE "FileDescription", "JAJA" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "laboratorio" "\0"
+            VALUE "InternalName", "JAJA" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "laboratorio.exe" "\0"
-            VALUE "ProductName", "laboratorio" "\0"
+            VALUE "OriginalFilename", "JAJA.exe" "\0"
+            VALUE "ProductName", "JAJA" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

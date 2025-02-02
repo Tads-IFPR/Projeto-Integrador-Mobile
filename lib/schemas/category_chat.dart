@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:laboratorio/schemas/categories.dart';
-import 'package:laboratorio/schemas/chats.dart';
+import 'package:JAJA/schemas/categories.dart';
+import 'package:JAJA/schemas/chats.dart';
 
 class CategoryChat extends Table {
   IntColumn get id => integer().autoIncrement()();

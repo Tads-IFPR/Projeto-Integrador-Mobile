@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:laboratorio/screens/objectivesMetrics.dart';
+import 'package:JAJA/screens/objectivesMetrics.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:laboratorio/database/database.dart';
-import 'package:laboratorio/screens/objectives.dart';
+import 'package:JAJA/database/database.dart';
+import 'package:JAJA/screens/objectives.dart';
 
 class DatabaseOverview extends StatefulWidget {
   const DatabaseOverview({super.key});

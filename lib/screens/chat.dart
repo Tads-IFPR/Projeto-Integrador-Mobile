@@ -3,16 +3,16 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:laboratorio/components/chat/filePreview/filePreview.dart';
-import 'package:laboratorio/dao/chat.dart';
-import 'package:laboratorio/main.dart';
-import 'package:laboratorio/styles/default.dart';
+import 'package:JAJA/components/chat/filePreview/filePreview.dart';
+import 'package:JAJA/dao/chat.dart';
+import 'package:JAJA/main.dart';
+import 'package:JAJA/styles/default.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:laboratorio/components/chat/message.dart';
-import 'package:laboratorio/components/chat/suggestions/suggestion.dart';
-import 'package:laboratorio/components/chat/textBar.dart';
+import 'package:JAJA/components/chat/message.dart';
+import 'package:JAJA/components/chat/suggestions/suggestion.dart';
+import 'package:JAJA/components/chat/textBar.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({
