@@ -15,6 +15,15 @@ class CardSuggestion extends StatelessWidget {
     required this.lightColor,
   });
 
+  limitText(String? text) {
+    if (text == null) return '';
+
+    if (text.length > 80) {
+      return '${text.substring(0, 80)}...';
+    }
+    return text;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -27,7 +36,7 @@ class CardSuggestion extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: [
             Text(
               title ?? "",
@@ -35,7 +44,7 @@ class CardSuggestion extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              text ?? "",
+              limitText(text) ?? "",
               style: TextStyle(color: color),
             ),
           ],
