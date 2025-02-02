@@ -23,6 +23,7 @@ class ChatDAO extends AppDatabase {
 
   Future<void> deleteChat(int chatId) async {
     await deleteMessages(chatId);
+    await deleteCategories(chatId);
     await deleteRecordById(chats, chatId);
     _allChats.removeWhere((element) => element.id == chatId);
 
@@ -36,6 +37,10 @@ class ChatDAO extends AppDatabase {
 
   Future<void> deleteMessages(int chatID) async {
     await (delete(db.messages)..where((tbl) => tbl.chatId.equals(chatID))).go();
+  }
+
+  Future<void> deleteCategories(int chatID) async {
+    await (delete(db.categoryChat)..where((tbl) => tbl.chatId.equals(chatID))).go();
   }
 
   Future<List<Message>> getMessagesForChat(int chatId) {
