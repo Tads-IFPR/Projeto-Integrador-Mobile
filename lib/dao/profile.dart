@@ -10,6 +10,12 @@ Future<void> deleteUserAndRelatedData(AppDatabase db) async {
   final int userId = lastUser.id;
 
   return db.transaction(() async {
+
+    final deletedFileMessages = await (db.delete(db.fileMessage));
+    if (deletedFileMessages == 0) {
+      print('No file messages found for user $userId');
+    }
+
     final deletedMessages = await (db.delete(db.messages));
     if (deletedMessages == 0) {
       print('No messages found for user $userId');
@@ -30,15 +36,17 @@ Future<void> deleteUserAndRelatedData(AppDatabase db) async {
       print('No chats found for user $userId');
     }
 
-    final deletedCategories = await (db.delete(db.categories));
-    if (deletedCategories == 0) {
-      print('No categories found for user $userId');
-    }
-
     final deletedCategoryChat = deleteAllCategoryChat(db);
     if (deletedCategoryChat == 0) {
       print('No category chat found for user $userId');
     }
+
+    final deletedCategories = db.delete(db.categories).go();
+    if (deletedCategories == 0) {
+      print('No categories found for user $userId');
+    }
+
+
   });
 }
 Future<void> deleteAllCategoryChat(AppDatabase db) async {
@@ -54,7 +62,10 @@ Future<User?> _getLastUser() async {
 
 Future<void> deleteAllChats(ChatDAO chatDAO) async {
   final allChats = await chatDAO.getAllChats();
-  for (final chat in allChats) {
+  final chatsToDelete = List.from(allChats);
+
+  for (final chat in chatsToDelete) {
+    print('Deleting chat ${chat.id}');
     await chatDAO.deleteChat(chat.id);
   }
 }
