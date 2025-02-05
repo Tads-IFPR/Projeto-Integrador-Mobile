@@ -14,7 +14,7 @@ class OpenAIService {
   final String _baseUrl = 'https://api.openai.com/v1';
 
   Future<Map<String, dynamic>> sendMessage(String prompt, {List<File?> files = const [], String model = 'gpt-4o-mini'}) async {
-    throw Exception('Internal test');
+    // throw Exception('Internal test');
     final url = Uri.parse('$_baseUrl/chat/completions');
     final headers = {
       'Content-Type': 'application/json',
